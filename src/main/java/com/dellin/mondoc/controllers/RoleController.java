@@ -16,18 +16,18 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequestMapping("/api/role")
 @RequiredArgsConstructor
 public class RoleController {
-
+	
 	private final RoleService roleService;
-
+	
 	@PostMapping("/save")
 	public ResponseEntity<RoleDTO> create(@RequestBody RoleDTO roleDTO) {
 		URI uri = URI.create(
 				ServletUriComponentsBuilder.fromCurrentContextPath().toUriString());
 		return ResponseEntity.created(uri).body(roleService.create(roleDTO));
 	}
-
+	
 	@PostMapping("/addToUser")
-	public ResponseEntity<?> addRoleToUser(RoleToUserForm form) {
+	public ResponseEntity<?> addToUser(@RequestBody RoleToUserForm form) {
 		roleService.addRoleToUser(form.getEmail(), form.getRoleName());
 		return ResponseEntity.ok().build();
 	}
@@ -35,7 +35,7 @@ public class RoleController {
 
 @Data
 class RoleToUserForm {
-
+	
 	private String email;
 	private String roleName;
 }
