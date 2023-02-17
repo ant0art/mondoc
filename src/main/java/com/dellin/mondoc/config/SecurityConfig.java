@@ -46,6 +46,7 @@ public class SecurityConfig {
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 		http.authorizeHttpRequests((requests) -> requests.requestMatchers("api/login/**",
 							"/api/token/refresh/**").permitAll()
+					.requestMatchers("/dellin/**").permitAll()
 					.requestMatchers(GET, "/api/user/**").hasAnyAuthority("ROLE_USER")
 					.requestMatchers(POST, "/api/user/save/**").hasAnyAuthority("ROLE_ADMIN")
 					.requestMatchers(POST, "/api/role/**").hasAnyAuthority("ROLE_ADMIN")
