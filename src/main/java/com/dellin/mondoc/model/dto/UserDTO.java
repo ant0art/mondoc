@@ -22,14 +22,11 @@ import java.util.*;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserDTO {
-
-	@NotEmpty(message = "Email should not be empty")
-	@Email
-	String email;
-
-	@NotEmpty(message = "Password should not be empty")
-	String password;
-
+	
+	@NotEmpty(message = "Email should not be empty") @Email String email;
+	
+	@NotEmpty(message = "Password should not be empty") String password;
+	
 	@ManyToMany(fetch = FetchType.EAGER)
 	Collection<Role> roles = new ArrayList<>();
 }

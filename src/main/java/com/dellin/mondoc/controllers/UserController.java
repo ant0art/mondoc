@@ -37,33 +37,33 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class UserController {
-
+	
 	private final UserService userService;
-
+	
 	@PostMapping("/user/save")
 	public ResponseEntity<UserDTO> create(@RequestBody UserDTO userDTO) {
 		URI uri = URI.create(
 				ServletUriComponentsBuilder.fromCurrentContextPath().toUriString());
 		return ResponseEntity.created(uri).body(userService.create(userDTO));
 	}
-
+	
 	@GetMapping("/user/get")
 	public ResponseEntity<UserDTO> read(@RequestParam String email) {
 		return ResponseEntity.ok(userService.get(email));
 	}
-
+	
 	@PutMapping("/user/update")
 	public ResponseEntity<UserDTO> update(@RequestParam String email,
 			@RequestBody UserDTO userDTO) {
 		return ResponseEntity.ok(userService.update(email, userDTO));
 	}
-
+	
 	@DeleteMapping("/user/delete")
 	public ResponseEntity<HttpStatus> delete(@RequestParam String email) {
 		userService.delete(email);
 		return ResponseEntity.ok().build();
 	}
-
+	
 	@GetMapping("/users")
 	public ModelMap getUsers(
 			@RequestParam(required = false, defaultValue = "1") Integer page,
@@ -72,26 +72,28 @@ public class UserController {
 			@RequestParam(required = false, defaultValue = "ASC") Sort.Direction order) {
 		return userService.getUsers(page, perPage, sort, order);
 	}
-
+	
 	@GetMapping("/token/refresh")
-	public void refreshToken(HttpServletRequest request, HttpServletResponse response)
-			throws IOException {
+	public void refreshToken(HttpServletRequest request,
+			HttpServletResponse response) throws IOException {
 		String authorizationHeader = request.getHeader(AUTHORIZATION);
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			try {
 				String secret = System.getenv("secret");
-
+				
 				String refreshToken = EncodingUtil.getRefreshToken(authorizationHeader);
 				User user = userService.getUser(
 						EncodingUtil.getDecodedUsername(secret, authorizationHeader));
-				String accessToken = JWT.create().withSubject(user.getUsername())
+				String accessToken = JWT.create()
+						.withSubject(user.getUsername())
 						.withExpiresAt(
 								new Date(System.currentTimeMillis() + 60 * 60 * 1000))
-						.withIssuer(request.getRequestURL().toString()).withClaim("roles",
+						.withIssuer(request.getRequestURL().toString())
+						.withClaim("roles",
 								user.getRoles().stream().map(Role::getRoleName)
-										.collect(Collectors.toList()))
-						.sign(EncodingUtil.getAlgorithm(secret));
-
+									.collect(Collectors.toList())).sign(
+								EncodingUtil.getAlgorithm(secret));
+				
 				Map<String, String> tokens = new HashMap<>();
 				tokens.put("access_token", accessToken);
 				tokens.put("refresh_token", refreshToken);

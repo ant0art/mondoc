@@ -32,35 +32,29 @@ import java.util.*;
 @Table(name = "roles")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Role implements GrantedAuthority {
-
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id", nullable = false)
 	Long id;
-
+	
 	@Column(nullable = false, unique = true)
 	String roleName;
-
+	
 	@ManyToMany
 	@JsonIgnore
-	@JoinTable(name = "users_roles", joinColumns = {
-			@JoinColumn(name = "USER_ID",
-					referencedColumnName = "id")
-	}, inverseJoinColumns = {
-			@JoinColumn(name =
-					"ROLE_ID", referencedColumnName = "id")
-	})
+	@JoinTable(name = "users_roles",
+			   joinColumns = {@JoinColumn(name = "USER_ID", referencedColumnName = "id")},
+			   inverseJoinColumns = {@JoinColumn(name = "ROLE_ID",
+												 referencedColumnName = "id")})
 	List<User> users;
-
+	
 	@Column(name = "updated_at")
 	LocalDateTime updatedAt;
-
+	
 	@Enumerated(EnumType.STRING)
 	EntityStatus state;
-
-	//@JsonIgnore
-	//String authority;
-
+	
 	@JsonIgnore
 	@Override
 	public String getAuthority() {

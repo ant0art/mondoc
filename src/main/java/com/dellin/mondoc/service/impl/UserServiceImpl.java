@@ -41,17 +41,17 @@ import java.util.stream.*;
 @RequiredArgsConstructor
 @Transactional
 public class UserServiceImpl implements UserService, UserDetailsService {
-
+	
 	private final RoleRepository roleRepository;
-
+	
 	private final UserRepository userRepository;
-
-	private final ObjectMapper mapper = JsonMapper.builder()
-			.addModule(new JavaTimeModule()).build();
-
+	
+	private final ObjectMapper mapper = JsonMapper.builder().addModule(
+			new JavaTimeModule()).build();
+	
 	private final PasswordEncoder passwordEncoder;
 	private final EmailValidator validator = EmailValidator.getInstance();
-
+	
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		User user = getUser(email);
@@ -68,7 +68,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return new org.springframework.security.core.userdetails.User(user.getUsername(),
 				user.getPassword(), authorities);
 	}
-
+	
 	@Override
 	public UserDTO create(UserDTO userDTO) {
 		if (!validator.isValid(userDTO.getEmail())) {
@@ -88,23 +88,23 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		user.setState(EntityStatus.CREATED);
 		log.info("User with email: {} with role: {} created", user.getEmail(),
 				role.getRoleName());
-
+		
 		//user --> userDTO
 		return mapper.convertValue(userRepository.save(user), UserDTO.class);
 	}
-
+	
 	@Override
 	public UserDTO get(String email) {
 		return mapper.convertValue(getUser(email), UserDTO.class);
 	}
-
+	
 	//todo Данный метод производит замещение полей пользователя необходимо разделить
 	// метод на 2:
 	//	1. Изменяет данные пользователя с проверкой пароля
 	//	2. Изменяет только пароль пользователя
 	@Override
 	public UserDTO update(String email, UserDTO userDTO) {
-
+		
 		AtomicReference<UserDTO> dto = new AtomicReference<>(new UserDTO());
 		userRepository.findByEmail(email).ifPresentOrElse(u -> {
 			if (userDTO.getEmail() != null && !userDTO.getEmail().isEmpty()) {
@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		});
 		return dto.get();
 	}
-
+	
 	@Override
 	public void delete(String email) {
 		User user = getUser(email);
@@ -133,14 +133,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		log.info("Deleting user with email: {}", email);
 		userRepository.save(user);
 	}
-
+	
 	@Override
 	public User getUser(String email) {
 		return userRepository.findByEmail(email).orElseThrow(() -> new CustomException(
 				String.format("User with email: %s not found", email),
 				HttpStatus.NOT_FOUND));
 	}
-
+	
 	@Override
 	public ModelMap getUsers(Integer page, Integer perPage, String sort,
 			Sort.Direction order) {
@@ -148,33 +148,32 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 			throw new CustomException("Page size must not be less than one",
 					HttpStatus.BAD_REQUEST);
 		}
-
+		
 		Pageable pageRequest = PaginationUtil.getPageRequest(page, perPage, sort, order);
 		Page<User> pageResult = userRepository.findAll(pageRequest);
-
-		List<UserDTO> content = pageResult.getContent().stream()
-				.map(u -> mapper.convertValue(u, UserDTO.class))
-				.collect(Collectors.toList());
-
+		
+		List<UserDTO> content = pageResult.getContent().stream().map(
+				u -> mapper.convertValue(u, UserDTO.class)).collect(Collectors.toList());
+		
 		ModelMap map = new ModelMap();
 		map.addAttribute("content", content);
 		map.addAttribute("pageNumber", page);
 		map.addAttribute("PageSize", pageResult.getNumberOfElements());
 		map.addAttribute("totalPages", pageResult.getTotalPages());
-
+		
 		return map;
 	}
-
+	
 	@Override
 	public void updateStatus(User user, EntityStatus status) {
 		user.setState(status);
 		user.setUpdatedAt(LocalDateTime.now());
 	}
-
+	
 	private void copyPropertiesIgnoreNull(Object source, Object target) {
 		BeanWrapper src = new BeanWrapperImpl(source);
 		BeanWrapper trg = new BeanWrapperImpl(target);
-
+		
 		for (PropertyDescriptor descriptor : src.getPropertyDescriptors()) {
 			String propertyName = descriptor.getName();
 			if (propertyName.equals("class")) {
