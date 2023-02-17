@@ -9,7 +9,7 @@ import org.springframework.data.domain.Sort;
  * matched parameters: page, perPage, sort, order
  */
 public class PaginationUtil {
-
+	
 	public static Pageable getPageRequest(Integer page, Integer perPage, String sort,
 			Sort.Direction order) {
 		if (page == null) {
@@ -17,11 +17,11 @@ public class PaginationUtil {
 		} else if (page > 0) {
 			page = page - 1;
 		}
-
+		
 		if (perPage == null) {
 			perPage = 10;
 		}
-
+		
 		if (order == null || sort == null) {
 			return PageRequest.of(page, perPage);
 		} else if (order.isDescending()) {

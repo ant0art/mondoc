@@ -24,27 +24,27 @@ import java.util.stream.*;
 
 @Slf4j
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-
+	
 	private final AuthenticationManager manager;
-
+	
 	public CustomAuthenticationFilter(AuthenticationManager manager) {
 		this.manager = manager;
 	}
-
+	
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request,
 			HttpServletResponse response) throws AuthenticationException {
 		String email = request.getParameter("username");
-
+		
 		String password = request.getParameter("password");
 		log.info("email is: {}", email);
 		log.info("password is: {}", password);
-
-		UsernamePasswordAuthenticationToken token
-				= new UsernamePasswordAuthenticationToken(email, password);
+		
+		UsernamePasswordAuthenticationToken token =
+				new UsernamePasswordAuthenticationToken(email, password);
 		return manager.authenticate(token);
 	}
-
+	
 	@Override
 	protected void successfulAuthentication(HttpServletRequest request,
 			HttpServletResponse response, FilterChain chain,
@@ -52,17 +52,20 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 		User user = (User) authentication.getPrincipal();
 		String secret = System.getenv("secret");
 		Algorithm algorithm = EncodingUtil.getAlgorithm(secret);
-
-		String accessToken = JWT.create().withSubject(user.getUsername())
+		
+		String accessToken = JWT.create()
+				.withSubject(user.getUsername())
 				.withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
-				.withIssuer(request.getRequestURL().toString()).withClaim("roles",
+				.withIssuer(request.getRequestURL().toString())
+				.withClaim("roles",
 						user.getAuthorities().stream().map(GrantedAuthority::getAuthority)
-								.collect(Collectors.toList())).sign(algorithm);
-
-		String refreshToken = JWT.create().withSubject(user.getUsername())
+							.collect(Collectors.toList())).sign(algorithm);
+		
+		String refreshToken = JWT.create()
+				.withSubject(user.getUsername())
 				.withExpiresAt(new Date(System.currentTimeMillis() + 60 * 60 * 1000))
 				.withIssuer(request.getRequestURL().toString()).sign(algorithm);
-
+		
 		Map<String, String> tokens = new HashMap<>();
 		tokens.put("access_token", accessToken);
 		tokens.put("refresh_token", refreshToken);

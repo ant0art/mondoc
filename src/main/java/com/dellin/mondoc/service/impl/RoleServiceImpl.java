@@ -24,16 +24,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class RoleServiceImpl implements RoleService {
-
+	
 	private final UserRepository userRepository;
-
+	
 	private final RoleRepository roleRepository;
-
+	
 	private final UserService userService;
-
-	private final ObjectMapper mapper = JsonMapper.builder()
-			.addModule(new JavaTimeModule()).build();
-
+	
+	private final ObjectMapper mapper = JsonMapper.builder().addModule(
+			new JavaTimeModule()).build();
+	
 	@Override
 	public RoleDTO create(RoleDTO roleDTO) {
 		if (roleDTO.getRoleName() == null || roleDTO.getRoleName().isEmpty()) {
@@ -44,24 +44,24 @@ public class RoleServiceImpl implements RoleService {
 		Role role = mapper.convertValue(roleDTO, Role.class);
 		updateStatus(role, EntityStatus.CREATED);
 		log.info("Role: {}  created", role.getRoleName());
-
+		
 		//role --> roleDTOq
 		return mapper.convertValue(roleRepository.save(role), RoleDTO.class);
 	}
-
+	
 	@Override
 	public RoleDTO get(String roleName) {
 		Role role = getRole(roleName);
 		return mapper.convertValue(role, RoleDTO.class);
 	}
-
+	
 	@Override
 	public void addRoleToUser(String email, String roleName) {
 		log.info("Adding to user with email: {} a role {}", email, roleName);
 		User user = userService.getUser(email);
-
+		
 		Role role = getRole(roleName);
-
+		
 		if (user.getRoles().stream().anyMatch(r -> r.equals(role))) {
 			throw new CustomException(
 					String.format("User with email: %s already has a role: %s", email,
@@ -73,14 +73,14 @@ public class RoleServiceImpl implements RoleService {
 		updateStatus(role, EntityStatus.UPDATED);
 		userRepository.save(user);
 	}
-
+	
 	public Role getRole(String roleName) {
 		return roleRepository.findByRoleName(roleName).orElseThrow(
 				() -> new CustomException(
 						String.format("Role with name: %s not found", roleName),
 						HttpStatus.NOT_FOUND));
 	}
-
+	
 	private void updateStatus(Role role, EntityStatus status) {
 		role.setState(status);
 		role.setUpdatedAt(LocalDateTime.now());

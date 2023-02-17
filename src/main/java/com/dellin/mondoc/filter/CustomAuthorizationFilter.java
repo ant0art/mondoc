@@ -26,13 +26,13 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
-
+	
 	@Override
 	protected void doFilterInternal(HttpServletRequest request,
-			HttpServletResponse response, FilterChain filterChain)
-			throws ServletException, IOException {
+			HttpServletResponse response, FilterChain filterChain) throws
+			ServletException, IOException {
 		if (request.getServletPath().equals("/api/login") || request.getServletPath()
-				.equals("/api/token/refresh")) {
+																	.equals("/api/token/refresh")) {
 			filterChain.doFilter(request, response);
 		} else {
 			String authorizationHeader = request.getHeader(AUTHORIZATION);
@@ -49,12 +49,12 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
 					Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
 					stream(roles).forEach(
 							role -> authorities.add(new SimpleGrantedAuthority(role)));
-
-					UsernamePasswordAuthenticationToken authenticationToken
-							= new UsernamePasswordAuthenticationToken(email, null,
-							authorities);
-					SecurityContextHolder.getContext()
-							.setAuthentication(authenticationToken);
+					
+					UsernamePasswordAuthenticationToken authenticationToken =
+							new UsernamePasswordAuthenticationToken(email, null,
+									authorities);
+					SecurityContextHolder.getContext().setAuthentication(
+							authenticationToken);
 					filterChain.doFilter(request, response);
 				} catch (Exception e) {
 					log.error("Some error: " + e.getMessage());
