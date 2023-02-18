@@ -1,7 +1,6 @@
 package com.dellin.mondoc.model.entity;
 
 import com.dellin.mondoc.model.enums.EntityStatus;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -9,8 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
-import org.springframework.security.core.GrantedAuthority;
+import org.hibernate.annotations.CreationTimestamp;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,46 +18,46 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.util.*;
 
 @Getter
 @Setter
 @Entity
+@Table(name = "sessions")
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "roles")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Role implements GrantedAuthority {
+public class Session {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
-	Long id;
+	@Column(nullable = false)
+	private Long id;
 	
-	@Column(nullable = false, unique = true)
-	String roleName;
+	@OneToOne(cascade = CascadeType.ALL)
+	User user;
 	
-	@ManyToMany
-	@JsonIgnore
-	@JoinTable(name = "users_roles",
-			   joinColumns = {@JoinColumn(name = "ROLE_ID", referencedColumnName = "id")},
-			   inverseJoinColumns = {@JoinColumn(name = "USER_ID",
-												 referencedColumnName = "id")})
-	List<User> users;
+	@Column
+	String appkey;
+	
+	@Column(name = "login_dl")
+	String login;
+	
+	@Column(name = "password_dl")
+	String password;
+	
+	@Column(name = "session_dl")
+	String sessionDl;
+	
+	@CreationTimestamp
+	@Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+			updatable = false)
+	LocalDateTime createdAt;
 	
 	@Column(name = "updated_at")
 	LocalDateTime updatedAt;
 	
 	@Enumerated(EnumType.STRING)
 	EntityStatus state;
-	
-	@JsonIgnore
-	@Override
-	public String getAuthority() {
-		return getRoleName();
-	}
 }

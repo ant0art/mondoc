@@ -42,7 +42,7 @@ public class RoleServiceImpl implements RoleService {
 		}
 		//roleDTO --> role
 		Role role = mapper.convertValue(roleDTO, Role.class);
-		updateStatus(role, EntityStatus.CREATED);
+		role.setState(EntityStatus.CREATED);
 		log.info("Role: {}  created", role.getRoleName());
 		
 		//role --> roleDTOq
@@ -69,7 +69,6 @@ public class RoleServiceImpl implements RoleService {
 		}
 		user.getRoles().add(role);
 		userService.updateStatus(user, EntityStatus.UPDATED);
-		role.getUsers().add(user);
 		updateStatus(role, EntityStatus.UPDATED);
 		userRepository.save(user);
 	}

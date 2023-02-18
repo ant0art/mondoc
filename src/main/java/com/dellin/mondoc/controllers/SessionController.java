@@ -1,8 +1,8 @@
 package com.dellin.mondoc.controllers;
 
+import com.dellin.mondoc.model.dto.SessionDTO;
 import com.dellin.mondoc.model.pojo.AuthDellin;
-import com.dellin.mondoc.model.pojo.UserLoginRequest;
-import com.dellin.mondoc.service.AuthDellinService;
+import com.dellin.mondoc.service.SessionService;
 import java.io.*;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -11,23 +11,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
-@RequestMapping("/dellin")
+@RequestMapping("/session")
 @RequiredArgsConstructor
-public class AuthDellinController {
+public class SessionController {
 	
-	private final AuthDellinService authDellinService;
+	private final SessionService sessionService;
 	
 	@PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<AuthDellin> login(
-			@RequestBody UserLoginRequest loginRequest) throws IOException {
+	public ResponseEntity<AuthDellin> login(@RequestParam String email,
+			@RequestBody SessionDTO sessionDTO) throws IOException {
 		
 		URI uri = URI.create(
 				ServletUriComponentsBuilder.fromCurrentContextPath().toUriString());
-		AuthDellin loginResponse = authDellinService.getLoginResponse();
+		AuthDellin loginResponse = sessionService.getLoginResponse(email, sessionDTO);
 		
 		return ResponseEntity.created(uri).body(loginResponse);
 	}

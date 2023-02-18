@@ -7,18 +7,22 @@ import lombok.Setter;
 @Setter
 public class AuthDellin {
 	
-	public Metadata metadata;
-	public Data data;
+	private Metadata metadata;
+	private Data data;
 	
+	@Getter
+	@Setter
 	public class Metadata {
 		
-		public Integer status;
-		public String generated_at;
+		private Integer status;
+		private String generated_at;
 	}
 	
+	@Getter
+	@Setter
 	public class Data {
 		
-		public String sessionID;
+		private String sessionID;
 	}
 }
 
