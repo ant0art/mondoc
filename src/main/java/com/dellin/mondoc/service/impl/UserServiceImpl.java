@@ -9,16 +9,14 @@ import com.dellin.mondoc.model.repository.RoleRepository;
 import com.dellin.mondoc.model.repository.UserRepository;
 import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.PaginationUtil;
+import com.dellin.mondoc.utils.PropertiesUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.beans.PropertyDescriptor;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -114,7 +112,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 									u.getEmail()), HttpStatus.BAD_REQUEST);
 				});
 			}
-			copyPropertiesIgnoreNull(mapper.convertValue(userDTO, User.class), u);
+			PropertiesUtil.copyPropertiesIgnoreNull(
+					mapper.convertValue(userDTO, User.class), u);
 			updateStatus(u, EntityStatus.UPDATED);
 			log.info("Updating user with email: {}", email);
 			dto.set(mapper.convertValue(userRepository.save(u), UserDTO.class));
@@ -168,21 +167,5 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	public void updateStatus(User user, EntityStatus status) {
 		user.setState(status);
 		user.setUpdatedAt(LocalDateTime.now());
-	}
-	
-	private void copyPropertiesIgnoreNull(Object source, Object target) {
-		BeanWrapper src = new BeanWrapperImpl(source);
-		BeanWrapper trg = new BeanWrapperImpl(target);
-		
-		for (PropertyDescriptor descriptor : src.getPropertyDescriptors()) {
-			String propertyName = descriptor.getName();
-			if (propertyName.equals("class")) {
-				continue;
-			}
-			Object propertyValue = src.getPropertyValue(propertyName);
-			if (propertyValue != null) {
-				trg.setPropertyValue(propertyName, propertyValue);
-			}
-		}
 	}
 }
