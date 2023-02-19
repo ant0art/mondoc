@@ -60,21 +60,6 @@ public class SessionServiceImpl implements SessionService {
 	private IInterfaceManualLoad iInterfaceManualLoad;
 	
 	@Override
-	public IInterfaceManualLoad getRemoteData() {
-		
-		Gson gson = new GsonBuilder().setLenient().create();
-		
-		if (iInterfaceManualLoad == null) {
-			Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrlFid)
-					.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-					.addConverterFactory(GsonConverterFactory.create(gson))
-					.client(getUnsafeOkHttpClient()).build();
-			iInterfaceManualLoad = retrofit.create(IInterfaceManualLoad.class);
-		}
-		return iInterfaceManualLoad;
-	}
-	
-	@Override
 	public AuthDellin getLoginResponse(SessionDTO sessionDTO) throws IOException {
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 		
@@ -103,6 +88,21 @@ public class SessionServiceImpl implements SessionService {
 		userRepository.save(user);
 		
 		return response.body();
+	}
+	
+	@Override
+	public IInterfaceManualLoad getRemoteData() {
+		
+		Gson gson = new GsonBuilder().setLenient().create();
+		
+		if (iInterfaceManualLoad == null) {
+			Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrlFid)
+					.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+					.addConverterFactory(GsonConverterFactory.create(gson))
+					.client(getUnsafeOkHttpClient()).build();
+			iInterfaceManualLoad = retrofit.create(IInterfaceManualLoad.class);
+		}
+		return iInterfaceManualLoad;
 	}
 	
 	private OkHttpClient getUnsafeOkHttpClient() {

@@ -36,10 +36,17 @@ public class RoleServiceImpl implements RoleService {
 	
 	@Override
 	public RoleDTO create(RoleDTO roleDTO) {
-		if (roleDTO.getRoleName() == null || roleDTO.getRoleName().isEmpty()) {
+		String roleName = roleDTO.getRoleName();
+		if (roleName == null || roleName.isEmpty()) {
 			throw new CustomException("Role name can`t be null or empty",
 					HttpStatus.BAD_REQUEST);
 		}
+		roleRepository.findByRoleName(roleName).ifPresent(r -> {
+			throw new CustomException(
+					String.format("Role with name: %s not found", r.getRoleName()),
+					HttpStatus.NOT_FOUND);
+		});
+		
 		//roleDTO --> role
 		Role role = mapper.convertValue(roleDTO, Role.class);
 		role.setState(EntityStatus.CREATED);

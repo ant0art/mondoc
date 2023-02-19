@@ -2,8 +2,6 @@ package com.dellin.mondoc.model.dto;
 
 import com.dellin.mondoc.model.entity.Role;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,6 +10,8 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.util.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 
 @Getter
 @Setter
