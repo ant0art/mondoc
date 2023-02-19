@@ -6,7 +6,7 @@ import java.io.*;
 
 public interface SessionService {
 	
-	AuthDellin getLoginResponse(String email, SessionDTO sessionDTO) throws IOException;
+	AuthDellin getLoginResponse(SessionDTO sessionDTO) throws IOException;
 	
 	IInterfaceManualLoad getRemoteData();
 	

@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import retrofit2.Call;
@@ -74,15 +75,15 @@ public class SessionServiceImpl implements SessionService {
 	}
 	
 	@Override
-	public AuthDellin getLoginResponse(String email, SessionDTO sessionDTO) throws
-			IOException {
+	public AuthDellin getLoginResponse(SessionDTO sessionDTO) throws IOException {
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 		
 		User user = userRepository.findByEmail(email).orElseThrow(
 				() -> new CustomException(
 						String.format("User with email: %s not found", email),
 						HttpStatus.NOT_FOUND));
 		
-		Call<AuthDellin> login = getRemoteData().login(email, sessionDTO);
+		Call<AuthDellin> login = getRemoteData().login(sessionDTO);
 		Response<AuthDellin> response = login.execute();
 		
 		if (!response.isSuccessful()) {
@@ -148,38 +149,6 @@ public class SessionServiceImpl implements SessionService {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	//	@Override
-	//	public RoleDTO get(String roleName) {
-	//		Role role = getRole(roleName);
-	//		return mapper.convertValue(role, RoleDTO.class);
-	//	}
-	//
-	//	@Override
-	//	public void addRoleToUser(String email, String roleName) {
-	//		log.info("Adding to user with email: {} a role {}", email, roleName);
-	//		User user = userService.getUser(email);
-	//
-	//		Role role = getRole(roleName);
-	//
-	//		if (user.getRoles().stream().anyMatch(r -> r.equals(role))) {
-	//			throw new CustomException(
-	//					String.format("User with email: %s already has a role: %s", email,
-	//							roleName), HttpStatus.BAD_REQUEST);
-	//		}
-	//		user.getRoles().add(role);
-	//		userService.updateStatus(user, EntityStatus.UPDATED);
-	//		role.getUsers().add(user);
-	//		updateStatus(role, EntityStatus.UPDATED);
-	//		userRepository.save(user);
-	//	}
-	//
-	//	public Role getRole(String roleName) {
-	//		return roleRepository.findByRoleName(roleName).orElseThrow(
-	//				() -> new CustomException(
-	//						String.format("Role with name: %s not found", roleName),
-	//						HttpStatus.NOT_FOUND));
-	//	}
 	
 	private void updateStatus(Session session, EntityStatus status) {
 		session.setState(status);

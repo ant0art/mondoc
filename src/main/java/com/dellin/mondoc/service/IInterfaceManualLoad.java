@@ -6,13 +6,12 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
-import retrofit2.http.Query;
 
 public interface IInterfaceManualLoad {
 	
 	@Headers("Content-Type: application/json")
 	@POST("/v3/auth/login.json")
-	Call<AuthDellin> login(@Query("email") String email, @Body SessionDTO sessionDTO);
+	Call<AuthDellin> login(@Body SessionDTO sessionDTO);
 	
 	//	@POST("v3/auth/logout.json")
 	//	Call<AuthDellin> logout(@Body )

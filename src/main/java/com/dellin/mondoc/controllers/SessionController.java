@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -23,12 +22,12 @@ public class SessionController {
 	private final SessionService sessionService;
 	
 	@PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<AuthDellin> login(@RequestParam String email,
-			@RequestBody SessionDTO sessionDTO) throws IOException {
+	public ResponseEntity<AuthDellin> login(@RequestBody SessionDTO sessionDTO) throws
+			IOException {
 		
 		URI uri = URI.create(
 				ServletUriComponentsBuilder.fromCurrentContextPath().toUriString());
-		AuthDellin loginResponse = sessionService.getLoginResponse(email, sessionDTO);
+		AuthDellin loginResponse = sessionService.getLoginResponse(sessionDTO);
 		
 		return ResponseEntity.created(uri).body(loginResponse);
 	}
