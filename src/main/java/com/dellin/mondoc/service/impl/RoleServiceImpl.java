@@ -36,13 +36,20 @@ public class RoleServiceImpl implements RoleService {
 	
 	@Override
 	public RoleDTO create(RoleDTO roleDTO) {
-		if (roleDTO.getRoleName() == null || roleDTO.getRoleName().isEmpty()) {
+		String roleName = roleDTO.getRoleName();
+		if (roleName == null || roleName.isEmpty()) {
 			throw new CustomException("Role name can`t be null or empty",
 					HttpStatus.BAD_REQUEST);
 		}
+		roleRepository.findByRoleName(roleName).ifPresent(r -> {
+			throw new CustomException(
+					String.format("Role with name: %s not found", r.getRoleName()),
+					HttpStatus.NOT_FOUND);
+		});
+		
 		//roleDTO --> role
 		Role role = mapper.convertValue(roleDTO, Role.class);
-		updateStatus(role, EntityStatus.CREATED);
+		role.setState(EntityStatus.CREATED);
 		log.info("Role: {}  created", role.getRoleName());
 		
 		//role --> roleDTOq
@@ -69,7 +76,6 @@ public class RoleServiceImpl implements RoleService {
 		}
 		user.getRoles().add(role);
 		userService.updateStatus(user, EntityStatus.UPDATED);
-		role.getUsers().add(user);
 		updateStatus(role, EntityStatus.UPDATED);
 		userRepository.save(user);
 	}

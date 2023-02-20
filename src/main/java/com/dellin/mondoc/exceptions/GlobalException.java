@@ -1,6 +1,5 @@
 package com.dellin.mondoc.exceptions;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
@@ -17,6 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.*;
+import javax.servlet.http.HttpServletResponse;
 
 @Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -36,23 +36,13 @@ public class GlobalException extends ResponseEntityExceptionHandler {
 		};
 	}
 	
-	@ExceptionHandler({CustomException.class})
+	@ExceptionHandler(CustomException.class)
 	public ResponseEntity<ErrorMessage> handleAuthenticationException(
 			HttpServletResponse response, CustomException ex) throws IOException {
 		
 		ErrorMessage er = new ErrorMessage(ex.getMessage());
 		return ResponseEntity.status(ex.getStatus().value()).body(er);
 	}
-
-/*	@ExceptionHandler(MissingServletRequestParameterException.class)
-	public ResponseEntity<ErrorMessage> handleMissingParams(
-			MissingServletRequestParameterException ex) {
-		String parameter = ex.getParameterName();
-
-		log.error("{} parameter is missing", parameter);
-		return ResponseEntity.status(404).body(new ErrorMessage(
-				String.format("parameter is missing: %s", parameter)));
-	}*/
 	
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
 	public ResponseEntity<ErrorMessage> handleMismatchParams(
