@@ -12,7 +12,7 @@ import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
  */
 public final class EncodingUtil {
 	
-	private static final String SECRET = System.getenv("JASYPT_ENCRYPTOR_PASSWORD");
+	private static String secret = System.getenv("JASYPT_ENCRYPTOR_PASSWORD");
 	
 	private EncodingUtil() {
 		throw new UnsupportedOperationException();
@@ -34,15 +34,14 @@ public final class EncodingUtil {
 	
 	public static String getEncrypted(String text) {
 		StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
-		
-		encryptor.setPassword(SECRET);
+		encryptor.setPassword(secret);
 		encryptor.setAlgorithm("PBEWithMD5AndTripleDES");
 		return encryptor.encrypt(text);
 	}
 	
 	public static String getDecrypted(String text) {
 		StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
-		encryptor.setPassword(SECRET);
+		encryptor.setPassword(secret);
 		encryptor.setAlgorithm("PBEWithMD5AndTripleDES");
 		return encryptor.decrypt(text);
 	}
