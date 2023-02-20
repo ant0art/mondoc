@@ -32,4 +32,13 @@ public class SessionController {
 		return ResponseEntity.created(uri).body(loginResponse);
 	}
 	
+	@PostMapping(value = "/logout")
+	public ResponseEntity<AuthDellin> logout() throws IOException {
+		URI uri = URI.create(
+				ServletUriComponentsBuilder.fromCurrentContextPath().toUriString());
+		AuthDellin logoutResponse = sessionService.getLogoutResponse();
+		
+		return ResponseEntity.created(uri).body(logoutResponse);
+	}
+	
 }

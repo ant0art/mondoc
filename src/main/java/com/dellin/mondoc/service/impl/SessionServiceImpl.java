@@ -105,6 +105,41 @@ public class SessionServiceImpl implements SessionService {
 	}
 	
 	@Override
+	public AuthDellin getLogoutResponse() throws IOException {
+		
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
+		log.info("User with email: {} starts logout", email);
+		
+		User user = userRepository.findByEmail(email).orElseThrow(
+				() -> new CustomException(
+						String.format("User with email: %s not found", email),
+						HttpStatus.NOT_FOUND));
+		
+		Session session = user.getSession();
+		SessionDTO sessionDTO = mapper.convertValue(session, SessionDTO.class);
+		
+		sessionDTO.setAppkey(EncodingUtil.getDecrypted(sessionDTO.getAppkey()));
+		
+		Call<AuthDellin> logout = getRemoteData().logout(sessionDTO);
+		Response<AuthDellin> response = logout.execute();
+		
+		if (!response.isSuccessful()) {
+			throw new IOException(
+					response.errorBody() != null ? response.errorBody().string()
+							: "Unknown error");
+		}
+		
+		updateStatus(session, EntityStatus.DELETED);
+		session.setUser(user);
+		user.setSession(session);
+		userRepository.save(user);
+		
+		log.info("User with email: {} successfully logout", email);
+		
+		return response.body();
+	}
+	
+	@Override
 	public IInterfaceManualLoad getRemoteData() {
 		
 		Gson gson = new GsonBuilder().setLenient().create();

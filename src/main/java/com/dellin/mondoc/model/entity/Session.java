@@ -1,6 +1,7 @@
 package com.dellin.mondoc.model.entity;
 
 import com.dellin.mondoc.model.enums.EntityStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,7 @@ public class Session {
 	@Column(nullable = false)
 	private Long id;
 	
+	@JsonIgnore
 	@OneToOne(cascade = CascadeType.ALL)
 	User user;
 	

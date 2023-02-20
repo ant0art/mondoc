@@ -13,8 +13,9 @@ public interface IInterfaceManualLoad {
 	@POST("/v3/auth/login.json")
 	Call<AuthDellin> login(@Body SessionDTO sessionDTO);
 	
-	//	@POST("v3/auth/logout.json")
-	//	Call<AuthDellin> logout(@Body )
+	@Headers("Content-Type: application/json")
+	@POST("/v3/auth/logout.json")
+	Call<AuthDellin> logout(@Body SessionDTO sessionDTO);
 		
 		/*@POST("/api/v2/registration")
 		Call<UserSessionDTO> register(@Body RegisterRequest request);

@@ -22,6 +22,7 @@ public class AuthDellin {
 	@Setter
 	public class Data {
 		
+		private String state;
 		private String sessionID;
 	}
 }
