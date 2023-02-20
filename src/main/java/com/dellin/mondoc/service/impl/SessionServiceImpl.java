@@ -10,6 +10,7 @@ import com.dellin.mondoc.model.repository.SessionRepository;
 import com.dellin.mondoc.model.repository.UserRepository;
 import com.dellin.mondoc.service.IInterfaceManualLoad;
 import com.dellin.mondoc.service.SessionService;
+import com.dellin.mondoc.utils.EncodingUtil;
 import com.dellin.mondoc.utils.PropertiesUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -78,22 +79,25 @@ public class SessionServiceImpl implements SessionService {
 							: "Unknown error");
 		}
 		
-		Session session;
+		sessionDTO.setPassword(EncodingUtil.getEncrypted(sessionDTO.getPassword()));
+		sessionDTO.setLogin(EncodingUtil.getEncrypted(sessionDTO.getLogin()));
+		sessionDTO.setAppkey(EncodingUtil.getEncrypted(sessionDTO.getAppkey()));
 		sessionDTO.setSessionDl(response.body().getData().getSessionID());
+		Session session = mapper.convertValue(sessionDTO, Session.class);
+		Session userSession = user.getSession();
 		
-		if (user.getSession() == null) {
-			session = mapper.convertValue(sessionDTO, Session.class);
+		if (userSession == null) {
 			session.setState(EntityStatus.CREATED);
 			log.info("Session: {}  created", session.getSessionDl());
+			user.setSession(session);
+			session.setUser(user);
 		} else {
-			session = user.getSession();
-			PropertiesUtil.copyPropertiesIgnoreNull(
-					mapper.convertValue(sessionDTO, Session.class), session);
-			updateStatus(session, EntityStatus.UPDATED);
-			log.info("Session: {}  updated", session.getSessionDl());
+			PropertiesUtil.copyPropertiesIgnoreNull(session, userSession);
+			updateStatus(userSession, EntityStatus.UPDATED);
+			log.info("Session: {}  updated", userSession.getSessionDl());
+			user.setSession(userSession);
+			userSession.setUser(user);
 		}
-		session.setUser(user);
-		user.setSession(session);
 		
 		userRepository.save(user);
 		

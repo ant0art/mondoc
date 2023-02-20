@@ -4,16 +4,20 @@ import com.dellin.mondoc.model.dto.RoleDTO;
 import com.dellin.mondoc.model.dto.UserDTO;
 import com.dellin.mondoc.service.RoleService;
 import com.dellin.mondoc.service.UserService;
+import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.*;
 
 @SpringBootApplication
+@EnableEncryptableProperties
+@PropertySource(name = "EncryptedProperties", value = "classpath:application.yml")
 public class MondocApplication {
 	
 	public static void main(String[] args) {
