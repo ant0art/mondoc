@@ -56,7 +56,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		http.authorizeRequests()
 				.antMatchers("/api/login/**", "/api/token/refresh/**").permitAll();
 		http.authorizeRequests()
-				.antMatchers("/session/**").permitAll();
+				.antMatchers("/session/**").permitAll()
+				.antMatchers(POST, "/order/**").permitAll();
 		
 		http.authorizeRequests()
 				.antMatchers(GET, "/api/user/**").hasAnyAuthority("ROLE_USER");
@@ -71,5 +72,4 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		http.addFilterBefore(new CustomAuthorizationFilter(),
 				UsernamePasswordAuthenticationFilter.class);
 	}
-	
 }
