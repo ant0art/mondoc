@@ -11,5 +11,4 @@ public interface SessionService {
 	AuthDellin getLogoutResponse() throws IOException;
 	
 	IInterfaceManualLoad getRemoteData();
-	
 }

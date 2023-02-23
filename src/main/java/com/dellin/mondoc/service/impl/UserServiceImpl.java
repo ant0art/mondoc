@@ -44,8 +44,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	
 	private final UserRepository userRepository;
 	
-	private final ObjectMapper mapper = JsonMapper.builder().addModule(
-			new JavaTimeModule()).build();
+	private final ObjectMapper mapper =
+			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
 	private final PasswordEncoder passwordEncoder;
 	private final EmailValidator validator = EmailValidator.getInstance();
@@ -61,8 +61,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 			log.info(String.format("User with email: %s found in db", email));
 		}
 		Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
-		user.getRoles().forEach(
-				role -> authorities.add(new SimpleGrantedAuthority(role.getRoleName())));
+		user.getRoles()
+				.forEach(role -> authorities.add(
+						new SimpleGrantedAuthority(role.getRoleName())));
 		return new org.springframework.security.core.userdetails.User(user.getUsername(),
 				user.getPassword(), authorities);
 	}
@@ -151,8 +152,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		Pageable pageRequest = PaginationUtil.getPageRequest(page, perPage, sort, order);
 		Page<User> pageResult = userRepository.findAll(pageRequest);
 		
-		List<UserDTO> content = pageResult.getContent().stream().map(
-				u -> mapper.convertValue(u, UserDTO.class)).collect(Collectors.toList());
+		List<UserDTO> content = pageResult.getContent().stream()
+				.map(u -> mapper.convertValue(u, UserDTO.class))
+				.collect(Collectors.toList());
 		
 		ModelMap map = new ModelMap();
 		map.addAttribute("content", content);

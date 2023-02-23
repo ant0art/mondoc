@@ -53,8 +53,8 @@ public class SessionServiceImpl implements SessionService {
 	
 	private final SessionRepository sessionRepository;
 	
-	private final ObjectMapper mapper = JsonMapper.builder().addModule(
-			new JavaTimeModule()).build();
+	private final ObjectMapper mapper =
+			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
 	@Value("${api.address}")
 	private String baseUrlFid;
@@ -176,21 +176,19 @@ public class SessionServiceImpl implements SessionService {
 			// Install the all-trusting trust manager
 			final SSLContext sslContext = SSLContext.getInstance("SSL");
 			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-			// Create an ssl socket factory with our all-trusting manager
+			// Create a ssl socket factory with our all-trusting manager
 			final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 			
 			OkHttpClient.Builder builder = new OkHttpClient.Builder();
 			
-			builder.readTimeout(240, TimeUnit.SECONDS);
-			builder.connectTimeout(240, TimeUnit.SECONDS);
-			builder.writeTimeout(240, TimeUnit.SECONDS);
-			
-			//   builder.sslSocketFactory(sslSocketFactory);
-			builder.hostnameVerifier(new HostnameVerifier() {
-				public boolean verify(String s, SSLSession sslSession) {
-					return true;
-				}
-			});
+			builder.readTimeout(240, TimeUnit.SECONDS)
+				   .connectTimeout(240, TimeUnit.SECONDS)
+				   .writeTimeout(240, TimeUnit.SECONDS)
+				   .hostnameVerifier(new HostnameVerifier() {
+					   public boolean verify(String s, SSLSession sslSession) {
+						   return true;
+					   }
+				   });
 			
 			OkHttpClient okHttpClient = builder.build();
 			return okHttpClient;

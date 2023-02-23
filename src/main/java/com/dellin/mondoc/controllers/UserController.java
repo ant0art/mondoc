@@ -89,10 +89,10 @@ public class UserController {
 						.withExpiresAt(
 								new Date(System.currentTimeMillis() + 60 * 60 * 1000))
 						.withIssuer(request.getRequestURL().toString())
-						.withClaim("roles",
-								user.getRoles().stream().map(Role::getRoleName)
-									.collect(Collectors.toList())).sign(
-								EncodingUtil.getAlgorithm(secret));
+						.withClaim("roles", user.getRoles().stream()
+								.map(Role::getRoleName)
+								.collect(Collectors.toList()))
+						.sign(EncodingUtil.getAlgorithm(secret));
 				
 				Map<String, String> tokens = new HashMap<>();
 				tokens.put("access_token", accessToken);

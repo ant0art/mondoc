@@ -40,5 +40,4 @@ public class SessionController {
 		
 		return ResponseEntity.created(uri).body(logoutResponse);
 	}
-	
 }
