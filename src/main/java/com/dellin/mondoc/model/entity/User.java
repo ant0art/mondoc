@@ -40,7 +40,7 @@ public class User implements UserDetails {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(nullable = false)
-	private Long id;
+	Long id;
 	
 	@Column(nullable = false, unique = true)
 	String email;
@@ -68,6 +68,13 @@ public class User implements UserDetails {
 	
 	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	Session session;
+	
+	@ManyToMany
+	@JoinTable(name = "users_companies",
+			   joinColumns = {@JoinColumn(name = "USER_ID", referencedColumnName = "id")},
+			   inverseJoinColumns = {@JoinColumn(name = "COMPANY_ID",
+												 referencedColumnName = "id")})
+	Collection<Company> companies = new ArrayList<>();
 	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
