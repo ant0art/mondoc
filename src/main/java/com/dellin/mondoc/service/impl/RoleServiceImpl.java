@@ -69,7 +69,8 @@ public class RoleServiceImpl implements RoleService {
 		
 		Role role = getRole(roleName);
 		
-		if (user.getRoles().stream()
+		if (user.getRoles()
+				.stream()
 				.anyMatch(r -> r.equals(role))) {
 			throw new CustomException(
 					String.format("User with email: %s already has a role: %s", email,

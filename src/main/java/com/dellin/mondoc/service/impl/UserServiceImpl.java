@@ -152,7 +152,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		Pageable pageRequest = PaginationUtil.getPageRequest(page, perPage, sort, order);
 		Page<User> pageResult = userRepository.findAll(pageRequest);
 		
-		List<UserDTO> content = pageResult.getContent().stream()
+		List<UserDTO> content = pageResult.getContent()
+				.stream()
 				.map(u -> mapper.convertValue(u, UserDTO.class))
 				.collect(Collectors.toList());
 		
