@@ -8,6 +8,7 @@ import com.dellin.mondoc.model.entity.User;
 import com.dellin.mondoc.model.enums.EntityStatus;
 import com.dellin.mondoc.model.enums.OrderDocType;
 import com.dellin.mondoc.model.pojo.OrderRequest;
+import com.dellin.mondoc.model.pojo.OrderRequestBuilder;
 import com.dellin.mondoc.model.pojo.OrderResponse;
 import com.dellin.mondoc.model.repository.CompanyRepository;
 import com.dellin.mondoc.model.repository.DocumentRepository;
@@ -80,9 +81,9 @@ public class OrderServiceImpl implements OrderService {
 						String.format("User with email: %s not found", email),
 						HttpStatus.NOT_FOUND));
 		
-		OrderRequest.OrderRequestBuilder requestBuilder = OrderRequest.builder()
+		OrderRequestBuilder requestBuilder = OrderRequest.builder()
 				.setAppKey(EncodingUtil.getDecrypted(user.getSession().getAppkey()))
-				.setSessionID(user.getSession().getSessionDl())
+				.setSessionID(EncodingUtil.getDecrypted(user.getSession().getSessionDl()))
 				.setPage(orderRequest.getPage());
 		
 		if (orderRequest.getDocIds() != null && !orderRequest.getDocIds().isEmpty()) {
@@ -121,7 +122,8 @@ public class OrderServiceImpl implements OrderService {
 				.forEach(o -> {
 					
 					//getting documents marked as "shipping"
-					o.getDocuments().stream()
+					o.getDocuments()
+							.stream()
 							.filter(d -> d.getType().equalsIgnoreCase("shipping"))
 							.forEach(d -> {
 								
@@ -152,7 +154,8 @@ public class OrderServiceImpl implements OrderService {
 										company = optionalCompany.get();
 									}
 									List<Document> documents;
-									documents = d.getAvailableDocs().stream()
+									documents = d.getAvailableDocs()
+											.stream()
 											.filter(avDoc -> documentRepository.findByUidAndType(
 																					   orderAndDocUid, OrderDocType.valueOf(
 																							   avDoc.toUpperCase()))
@@ -169,7 +172,7 @@ public class OrderServiceImpl implements OrderService {
 									company.getOrders().add(order);
 									
 									order.setDocuments(documents);
-									order.setState(EntityStatus.CREATED);
+									order.setStatus(EntityStatus.CREATED);
 									order.setCompany(company);
 									documents.forEach(doc -> doc.setOrder(order));
 									orderRepository.save(order);

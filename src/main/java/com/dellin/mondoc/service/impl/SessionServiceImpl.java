@@ -53,6 +53,8 @@ public class SessionServiceImpl implements SessionService {
 	
 	private final SessionRepository sessionRepository;
 	
+	private final String APPKEY = System.getenv("appkey");
+	
 	private final ObjectMapper mapper =
 			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
@@ -70,6 +72,8 @@ public class SessionServiceImpl implements SessionService {
 						String.format("User with email: %s not found", email),
 						HttpStatus.NOT_FOUND));
 		
+		sessionDTO.setAppkey(APPKEY);
+		
 		Call<AuthDellin> login = getRemoteData().login(sessionDTO);
 		Response<AuthDellin> response = login.execute();
 		
@@ -82,7 +86,8 @@ public class SessionServiceImpl implements SessionService {
 		sessionDTO.setPassword(EncodingUtil.getEncrypted(sessionDTO.getPassword()));
 		sessionDTO.setLogin(EncodingUtil.getEncrypted(sessionDTO.getLogin()));
 		sessionDTO.setAppkey(EncodingUtil.getEncrypted(sessionDTO.getAppkey()));
-		sessionDTO.setSessionDl(response.body().getData().getSessionID());
+		sessionDTO.setSessionDl(
+				EncodingUtil.getEncrypted(response.body().getData().getSessionID()));
 		Session session = mapper.convertValue(sessionDTO, Session.class);
 		Session userSession = user.getSession();
 		
@@ -119,6 +124,7 @@ public class SessionServiceImpl implements SessionService {
 		SessionDTO sessionDTO = mapper.convertValue(session, SessionDTO.class);
 		
 		sessionDTO.setAppkey(EncodingUtil.getDecrypted(sessionDTO.getAppkey()));
+		sessionDTO.setSessionDl(EncodingUtil.getDecrypted(sessionDTO.getSessionDl()));
 		
 		Call<AuthDellin> logout = getRemoteData().logout(sessionDTO);
 		Response<AuthDellin> response = logout.execute();
