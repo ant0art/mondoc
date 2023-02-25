@@ -22,8 +22,8 @@ public class SessionController {
 	private final SessionService sessionService;
 	
 	@PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<AuthDellin> login(@RequestBody SessionDTO sessionDTO) throws
-			IOException {
+	public ResponseEntity<AuthDellin> login(
+			@RequestBody(required = false) SessionDTO sessionDTO) throws IOException {
 		
 		URI uri = URI.create(
 				ServletUriComponentsBuilder.fromCurrentContextPath().toUriString());
@@ -40,5 +40,4 @@ public class SessionController {
 		
 		return ResponseEntity.created(uri).body(logoutResponse);
 	}
-	
 }

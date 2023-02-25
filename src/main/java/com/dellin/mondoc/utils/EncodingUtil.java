@@ -12,7 +12,7 @@ import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
  */
 public final class EncodingUtil {
 	
-	private static String secret = System.getenv("JASYPT_ENCRYPTOR_PASSWORD");
+	private static final String secret = System.getenv("JASYPT_ENCRYPTOR_PASSWORD");
 	
 	private EncodingUtil() {
 		throw new UnsupportedOperationException();

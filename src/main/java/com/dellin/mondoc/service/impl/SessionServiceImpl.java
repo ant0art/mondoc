@@ -53,8 +53,10 @@ public class SessionServiceImpl implements SessionService {
 	
 	private final SessionRepository sessionRepository;
 	
-	private final ObjectMapper mapper = JsonMapper.builder().addModule(
-			new JavaTimeModule()).build();
+	private final String APPKEY = System.getenv("appkey");
+	
+	private final ObjectMapper mapper =
+			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
 	@Value("${api.address}")
 	private String baseUrlFid;
@@ -70,6 +72,8 @@ public class SessionServiceImpl implements SessionService {
 						String.format("User with email: %s not found", email),
 						HttpStatus.NOT_FOUND));
 		
+		sessionDTO.setAppkey(APPKEY);
+		
 		Call<AuthDellin> login = getRemoteData().login(sessionDTO);
 		Response<AuthDellin> response = login.execute();
 		
@@ -82,7 +86,8 @@ public class SessionServiceImpl implements SessionService {
 		sessionDTO.setPassword(EncodingUtil.getEncrypted(sessionDTO.getPassword()));
 		sessionDTO.setLogin(EncodingUtil.getEncrypted(sessionDTO.getLogin()));
 		sessionDTO.setAppkey(EncodingUtil.getEncrypted(sessionDTO.getAppkey()));
-		sessionDTO.setSessionDl(response.body().getData().getSessionID());
+		sessionDTO.setSessionDl(
+				EncodingUtil.getEncrypted(response.body().getData().getSessionID()));
 		Session session = mapper.convertValue(sessionDTO, Session.class);
 		Session userSession = user.getSession();
 		
@@ -119,6 +124,7 @@ public class SessionServiceImpl implements SessionService {
 		SessionDTO sessionDTO = mapper.convertValue(session, SessionDTO.class);
 		
 		sessionDTO.setAppkey(EncodingUtil.getDecrypted(sessionDTO.getAppkey()));
+		sessionDTO.setSessionDl(EncodingUtil.getDecrypted(sessionDTO.getSessionDl()));
 		
 		Call<AuthDellin> logout = getRemoteData().logout(sessionDTO);
 		Response<AuthDellin> response = logout.execute();
@@ -176,21 +182,19 @@ public class SessionServiceImpl implements SessionService {
 			// Install the all-trusting trust manager
 			final SSLContext sslContext = SSLContext.getInstance("SSL");
 			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-			// Create an ssl socket factory with our all-trusting manager
+			// Create a ssl socket factory with our all-trusting manager
 			final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 			
 			OkHttpClient.Builder builder = new OkHttpClient.Builder();
 			
-			builder.readTimeout(240, TimeUnit.SECONDS);
-			builder.connectTimeout(240, TimeUnit.SECONDS);
-			builder.writeTimeout(240, TimeUnit.SECONDS);
-			
-			//   builder.sslSocketFactory(sslSocketFactory);
-			builder.hostnameVerifier(new HostnameVerifier() {
-				public boolean verify(String s, SSLSession sslSession) {
-					return true;
-				}
-			});
+			builder.readTimeout(240, TimeUnit.SECONDS)
+				   .connectTimeout(240, TimeUnit.SECONDS)
+				   .writeTimeout(240, TimeUnit.SECONDS)
+				   .hostnameVerifier(new HostnameVerifier() {
+					   public boolean verify(String s, SSLSession sslSession) {
+						   return true;
+					   }
+				   });
 			
 			OkHttpClient okHttpClient = builder.build();
 			return okHttpClient;

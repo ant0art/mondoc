@@ -31,8 +31,8 @@ public class RoleServiceImpl implements RoleService {
 	
 	private final UserService userService;
 	
-	private final ObjectMapper mapper = JsonMapper.builder().addModule(
-			new JavaTimeModule()).build();
+	private final ObjectMapper mapper =
+			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
 	@Override
 	public RoleDTO create(RoleDTO roleDTO) {
@@ -69,14 +69,16 @@ public class RoleServiceImpl implements RoleService {
 		
 		Role role = getRole(roleName);
 		
-		if (user.getRoles().stream().anyMatch(r -> r.equals(role))) {
+		if (user.getRoles()
+				.stream()
+				.anyMatch(r -> r.equals(role))) {
 			throw new CustomException(
 					String.format("User with email: %s already has a role: %s", email,
 							roleName), HttpStatus.BAD_REQUEST);
 		}
 		user.getRoles().add(role);
 		userService.updateStatus(user, EntityStatus.UPDATED);
-		updateStatus(role, EntityStatus.UPDATED);
+		//		updateStatus(role, EntityStatus.UPDATED);
 		userRepository.save(user);
 	}
 	
