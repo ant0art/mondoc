@@ -10,5 +10,7 @@ import java.util.*;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 	
+	List<Document> findByBase64Null();
+	
 	Optional<Document> findByUidAndType(String uid, OrderDocType type);
 }

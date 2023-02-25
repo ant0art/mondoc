@@ -2,6 +2,8 @@ package com.dellin.mondoc.service;
 
 import com.dellin.mondoc.model.dto.SessionDTO;
 import com.dellin.mondoc.model.pojo.AuthDellin;
+import com.dellin.mondoc.model.pojo.DocumentRequest;
+import com.dellin.mondoc.model.pojo.DocumentResponse;
 import com.dellin.mondoc.model.pojo.OrderRequest;
 import com.dellin.mondoc.model.pojo.OrderResponse;
 import retrofit2.Call;
@@ -22,6 +24,10 @@ public interface IInterfaceManualLoad {
 	@Headers("Content-Type: application/json")
 	@POST("/v3/orders.json")
 	Call<OrderResponse> getOrders(@Body OrderRequest orderRequest);
+	
+	@Headers("Content-Type: application/json")
+	@POST("/v1/printable.json")
+	Call<DocumentResponse> getPrintableDoc(@Body DocumentRequest documentRequest);
 	
 		/*@POST("/api/v2/registration")
 		Call<UserSessionDTO> register(@Body RegisterRequest request);
