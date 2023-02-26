@@ -53,7 +53,7 @@ public class Role implements GrantedAuthority {
 	LocalDateTime updatedAt;
 	
 	@Enumerated(EnumType.STRING)
-	EntityStatus state;
+	EntityStatus status;
 	
 	@JsonIgnore
 	@Override

@@ -17,4 +17,6 @@ import lombok.experimental.FieldDefaults;
 public class CompanyDTO {
 	
 	String name;
+	
+	String inn;
 }

@@ -57,7 +57,7 @@ public class User implements UserDetails {
 	LocalDateTime updatedAt;
 	
 	@Enumerated(EnumType.STRING)
-	EntityStatus state;
+	EntityStatus status;
 	
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "users_roles",

@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 						HttpStatus.NOT_FOUND));
 		user.getRoles().add(role);
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
-		user.setState(EntityStatus.CREATED);
+		user.setStatus(EntityStatus.CREATED);
 		log.info("User with email: {} with role: {} created", user.getEmail(),
 				role.getRoleName());
 		
@@ -168,7 +168,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	
 	@Override
 	public void updateStatus(User user, EntityStatus status) {
-		user.setState(status);
+		user.setStatus(status);
 		user.setUpdatedAt(LocalDateTime.now());
 	}
 }

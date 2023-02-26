@@ -66,5 +66,5 @@ public class Document {
 	LocalDateTime updatedAt;
 	
 	@Enumerated(EnumType.STRING)
-	EntityStatus state;
+	EntityStatus status;
 }

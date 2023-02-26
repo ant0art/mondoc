@@ -69,5 +69,5 @@ public class Company {
 	LocalDateTime updatedAt;
 	
 	@Enumerated(EnumType.STRING)
-	EntityStatus state;
+	EntityStatus status;
 }

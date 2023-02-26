@@ -92,7 +92,7 @@ public class SessionServiceImpl implements SessionService {
 		Session userSession = user.getSession();
 		
 		if (userSession == null) {
-			session.setState(EntityStatus.CREATED);
+			session.setStatus(EntityStatus.CREATED);
 			log.info("Session: {}  created", session.getSessionDl());
 			user.setSession(session);
 			session.setUser(user);
@@ -204,7 +204,7 @@ public class SessionServiceImpl implements SessionService {
 	}
 	
 	private void updateStatus(Session session, EntityStatus status) {
-		session.setState(status);
+		session.setStatus(status);
 		session.setUpdatedAt(LocalDateTime.now());
 	}
 }
