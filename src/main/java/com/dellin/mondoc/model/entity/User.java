@@ -57,7 +57,7 @@ public class User implements UserDetails {
 	LocalDateTime updatedAt;
 	
 	@Enumerated(EnumType.STRING)
-	EntityStatus state;
+	EntityStatus status;
 	
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "users_roles",
@@ -75,6 +75,13 @@ public class User implements UserDetails {
 			   inverseJoinColumns = {@JoinColumn(name = "COMPANY_ID",
 												 referencedColumnName = "id")})
 	Collection<Company> companies = new ArrayList<>();
+	
+	@ManyToMany
+	@JoinTable(name = "users_comments",
+			   joinColumns = {@JoinColumn(name = "USER_ID", referencedColumnName = "id")},
+			   inverseJoinColumns = {@JoinColumn(name = "COMMENT_ID",
+												 referencedColumnName = "id")})
+	Collection<Comment> comments = new ArrayList<>();
 	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

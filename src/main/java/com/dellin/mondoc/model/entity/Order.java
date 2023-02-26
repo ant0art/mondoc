@@ -64,4 +64,8 @@ public class Order {
 	String state;
 	
 	String uid;
+	
+	@OneToMany(cascade = CascadeType.ALL)
+	@JsonBackReference(value = "order_comments")
+	Collection<Comment> comments;
 }

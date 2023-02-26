@@ -244,4 +244,11 @@ public class OrderServiceImpl implements OrderService {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	@Override
+	public Order getOrder(String docId) {
+		return orderRepository.findByDocId(docId).orElseThrow(() -> new CustomException(
+				String.format("Order with ID: %d not found", docId),
+				HttpStatus.NOT_FOUND));
+	}
 }

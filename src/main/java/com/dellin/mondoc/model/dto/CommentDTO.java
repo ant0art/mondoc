@@ -14,9 +14,8 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CompanyDTO {
+public class CommentDTO {
 	
-	String name;
-	
-	String inn;
+	Long id;
+	String text;
 }

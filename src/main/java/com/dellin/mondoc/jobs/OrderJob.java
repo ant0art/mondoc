@@ -153,7 +153,7 @@ public class OrderJob {
 									if (optionalCompany.isEmpty()) {
 										//CREATE
 										company = new Company();
-										company.setState(EntityStatus.CREATED);
+										company.setStatus(EntityStatus.CREATED);
 										company.setInn(innPayer);
 										company.setName(d.getPayer().getName());
 										log.info("Company's database updated. New "
@@ -163,6 +163,11 @@ public class OrderJob {
 									} else {
 										//USE EX FROM DB
 										company = optionalCompany.get();
+										if (company.getName().length() == 0) {
+											company.setName(d.getPayer().getName());
+											company.setStatus(EntityStatus.UPDATED);
+											company.setUpdatedAt(LocalDateTime.now());
+										}
 										log.info("Loaded company from DB: [NAME: {}, "
 														+ "INN: {}]", company.getName(),
 												company.getInn());
@@ -182,7 +187,7 @@ public class OrderJob {
 												company.getOrders();
 										companyOrders.add(order);
 										company.setOrders(companyOrders);
-										company.setState(EntityStatus.UPDATED);
+										company.setStatus(EntityStatus.UPDATED);
 										company.setUpdatedAt(LocalDateTime.now());
 										log.info("Orders database updated. New "
 														+ "order: [UID: {}, DOC_ID: {}] "
@@ -219,7 +224,7 @@ public class OrderJob {
 														doc.toUpperCase()));
 												document.setOrder(order);
 												document.setUid(orderUID);
-												document.setState(EntityStatus.CREATED);
+												document.setStatus(EntityStatus.CREATED);
 												log.info("Document's database updated. "
 																+ "New document: [TYPE:"
 																+ " {}, UID: {}] added",
@@ -344,7 +349,7 @@ public class OrderJob {
 							}
 						}
 						
-						document.setState(EntityStatus.UPDATED);
+						document.setStatus(EntityStatus.UPDATED);
 						document.setUpdatedAt(LocalDateTime.now());
 						documentRepository.save(document);
 						log.info("Document: [TYPE: {}, UID: {}] updated",

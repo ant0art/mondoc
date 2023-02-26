@@ -18,47 +18,41 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "companies")
+@Table(name = "comments")
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Company {
+public class Comment {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(nullable = false)
-	Long id;
+	private Long id;
 	
-	@Column
-	String name;
-	
-	@Column
-	String inn;
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
+	@JsonManagedReference(value = "order_comments")
+	Order order;
 	
 	@ManyToMany
 	@JsonIgnore
-	@JoinTable(name = "users_companies", joinColumns = {@JoinColumn(name = "COMPANY_ID",
-																	referencedColumnName = "id")},
+	@JoinTable(name = "users_comments", joinColumns = {@JoinColumn(name = "COMMENT_ID",
+																   referencedColumnName = "id")},
 			   inverseJoinColumns = {@JoinColumn(name = "USER_ID",
 												 referencedColumnName = "id")})
-	List<User> users;
-	
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JsonManagedReference(value = "company_orders")
-	Collection<Order> orders = new ArrayList<>();
+	Collection<User> users = new ArrayList<>();
 	
 	@CreationTimestamp
 	@Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
@@ -70,4 +64,6 @@ public class Company {
 	
 	@Enumerated(EnumType.STRING)
 	EntityStatus status;
+	
+	String text;
 }

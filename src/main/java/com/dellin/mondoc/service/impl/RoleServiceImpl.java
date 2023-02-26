@@ -49,7 +49,7 @@ public class RoleServiceImpl implements RoleService {
 		
 		//roleDTO --> role
 		Role role = mapper.convertValue(roleDTO, Role.class);
-		role.setState(EntityStatus.CREATED);
+		role.setStatus(EntityStatus.CREATED);
 		log.info("Role: {}  created", role.getRoleName());
 		
 		//role --> roleDTOq
@@ -90,7 +90,7 @@ public class RoleServiceImpl implements RoleService {
 	}
 	
 	private void updateStatus(Role role, EntityStatus status) {
-		role.setState(status);
+		role.setStatus(status);
 		role.setUpdatedAt(LocalDateTime.now());
 	}
 }
