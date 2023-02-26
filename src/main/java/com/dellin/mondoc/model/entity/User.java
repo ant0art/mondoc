@@ -76,6 +76,13 @@ public class User implements UserDetails {
 												 referencedColumnName = "id")})
 	Collection<Company> companies = new ArrayList<>();
 	
+	@ManyToMany
+	@JoinTable(name = "users_comments",
+			   joinColumns = {@JoinColumn(name = "USER_ID", referencedColumnName = "id")},
+			   inverseJoinColumns = {@JoinColumn(name = "COMMENT_ID",
+												 referencedColumnName = "id")})
+	Collection<Comment> comments = new ArrayList<>();
+	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return getRoles();

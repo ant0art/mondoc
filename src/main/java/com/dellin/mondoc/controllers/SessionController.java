@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
-@RequestMapping("/session")
+@RequestMapping("/sessions")
 @RequiredArgsConstructor
 public class SessionController {
 	

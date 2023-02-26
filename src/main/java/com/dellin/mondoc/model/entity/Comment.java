@@ -1,7 +1,8 @@
 package com.dellin.mondoc.model.entity;
 
 import com.dellin.mondoc.model.enums.EntityStatus;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -17,38 +18,41 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "orders")
+@Table(name = "comments")
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Order {
+public class Comment {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(nullable = false)
 	private Long id;
 	
-	@Column(name = "doc_id", unique = true, nullable = false)
-	String docId;
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
+	@JsonManagedReference(value = "order_comments")
+	Order order;
 	
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@JsonBackReference(value = "company_orders")
-	Company company;
-	
-	@OneToMany(cascade = CascadeType.ALL)
-	@JsonBackReference(value = "order_documents")
-	Collection<Document> documents;
+	@ManyToMany
+	@JsonIgnore
+	@JoinTable(name = "users_comments", joinColumns = {@JoinColumn(name = "COMMENT_ID",
+																   referencedColumnName = "id")},
+			   inverseJoinColumns = {@JoinColumn(name = "USER_ID",
+												 referencedColumnName = "id")})
+	Collection<User> users = new ArrayList<>();
 	
 	@CreationTimestamp
 	@Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
@@ -61,11 +65,5 @@ public class Order {
 	@Enumerated(EnumType.STRING)
 	EntityStatus status;
 	
-	String state;
-	
-	String uid;
-	
-	@OneToMany(cascade = CascadeType.ALL)
-	@JsonBackReference(value = "order_comments")
-	Collection<Comment> comments;
+	String text;
 }
