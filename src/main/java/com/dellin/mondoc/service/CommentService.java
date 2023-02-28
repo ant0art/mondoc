@@ -9,5 +9,5 @@ public interface CommentService {
 	
 	void addCommentToOrder(String docId, Long id);
 	
-	CommentDTO update(CommentDTO commentDTO);
+	ResponseEntity<CommentDTO> update(CommentDTO commentDTO);
 }

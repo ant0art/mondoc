@@ -32,7 +32,7 @@ public class CompanyController {
 	
 	@PutMapping("/update")
 	public ResponseEntity<CompanyDTO> update(@RequestBody CompanyDTO companyDTO) {
-		return ResponseEntity.ok(companyService.update(companyDTO));
+		return companyService.update(companyDTO);
 	}
 }
 

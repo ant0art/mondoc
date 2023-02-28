@@ -33,7 +33,7 @@ public class CommentController {
 	
 	@PutMapping("/update")
 	public ResponseEntity<CommentDTO> update(@RequestBody CommentDTO commentDTO) {
-		return ResponseEntity.ok(commentService.update(commentDTO));
+		return commentService.update(commentDTO);
 	}
 }
 

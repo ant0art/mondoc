@@ -11,6 +11,7 @@ import com.dellin.mondoc.service.CommentService;
 import com.dellin.mondoc.service.OrderService;
 import com.dellin.mondoc.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDateTime;
@@ -20,8 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Slf4j
 @Service
@@ -35,23 +34,20 @@ public class CommentServiceImpl implements CommentService {
 	private final OrderService orderService;
 	
 	private final ObjectMapper mapper =
-			JsonMapper.builder().addModule(new JavaTimeModule()).build();
+			JsonMapper.builder().addModule(new JavaTimeModule())
+					  .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false).build();
 	
 	@Override
 	public ResponseEntity<CommentDTO> create(CommentDTO commentDTO) {
 		
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
-		
 		User user = userService.getUser(email);
 		
 		Comment comment = new Comment();
+		user.getComments().add(comment);
 		
+		comment.setUser(user);
 		comment.setStatus(EntityStatus.CREATED);
-		
-		Collection<User> users = comment.getUsers();
-		users.add(user);
-		comment.setUsers(users);
-		
 		comment.setText(commentDTO.getText());
 		
 		CommentDTO dto =
@@ -65,6 +61,12 @@ public class CommentServiceImpl implements CommentService {
 		Comment comment = getComment(id);
 		Order order = orderService.getOrder(docId);
 		
+		if (comment.getOrder() != null) {
+			throw new CustomException(
+					String.format("Comment [id: {%d}] already added to order [id: {%s}]",
+							id, comment.getOrder().getDocId()), HttpStatus.BAD_REQUEST);
+		}
+		
 		order.getComments().add(comment);
 		order.setStatus(EntityStatus.UPDATED);
 		order.setUpdatedAt(LocalDateTime.now());
@@ -77,7 +79,7 @@ public class CommentServiceImpl implements CommentService {
 	}
 	
 	@Override
-	public CommentDTO update(CommentDTO commentDTO) {
+	public ResponseEntity<CommentDTO> update(CommentDTO commentDTO) {
 		
 		Comment comment = getComment(commentDTO.getId());
 		String text = commentDTO.getText();
@@ -88,11 +90,14 @@ public class CommentServiceImpl implements CommentService {
 		
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 		User user = userService.getUser(email);
-		comment.getUsers().add(user);
+		comment.setUser(user);
 		comment.setStatus(EntityStatus.UPDATED);
 		comment.setUpdatedAt(LocalDateTime.now());
 		
-		return mapper.convertValue(commentRepository.save(comment), CommentDTO.class);
+		CommentDTO dto =
+				mapper.convertValue(commentRepository.save(comment), CommentDTO.class);
+		
+		return ResponseEntity.status(HttpStatus.OK).body(dto);
 	}
 	
 	public Comment getComment(Long id) {

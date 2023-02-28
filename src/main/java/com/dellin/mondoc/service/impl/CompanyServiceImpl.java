@@ -46,7 +46,12 @@ public class CompanyServiceImpl implements CompanyService {
 		Company company = getCompany(inn);
 		User user = userService.getUser(email);
 		
-		user.getCompanies().add(company);
+		if (user.getCompanies().contains(company)) {
+			throw new CustomException(String.format(
+					"User [%s] already has the rights to view a company [%s]", email,
+					company.getName()), HttpStatus.BAD_REQUEST);
+		}
+		
 		user.setStatus(EntityStatus.UPDATED);
 		user.setUpdatedAt(LocalDateTime.now());
 		
@@ -58,7 +63,7 @@ public class CompanyServiceImpl implements CompanyService {
 	}
 	
 	@Override
-	public CompanyDTO update(CompanyDTO companyDTO) {
+	public ResponseEntity<CompanyDTO> update(CompanyDTO companyDTO) {
 		
 		Company company = getCompany(companyDTO.getInn());
 		String name = companyDTO.getName();
@@ -71,7 +76,10 @@ public class CompanyServiceImpl implements CompanyService {
 		company.setStatus(EntityStatus.UPDATED);
 		company.setUpdatedAt(LocalDateTime.now());
 		
-		return mapper.convertValue(companyRepository.save(company), CompanyDTO.class);
+		CompanyDTO dto =
+				mapper.convertValue(companyRepository.save(company), CompanyDTO.class);
+		
+		return ResponseEntity.status(HttpStatus.OK).body(dto);
 	}
 	
 	public Company getCompany(String inn) {
