@@ -17,7 +17,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -42,13 +41,13 @@ public class Order {
 	@Column(name = "doc_id", unique = true, nullable = false)
 	String docId;
 	
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(cascade = CascadeType.ALL)
 	@JsonBackReference(value = "company_orders")
 	Company company;
 	
 	@OneToMany(cascade = CascadeType.ALL)
 	@JsonBackReference(value = "order_documents")
-	Collection<Document> documents;
+	Collection<Document> documents = new ArrayList<>();
 	
 	@CreationTimestamp
 	@Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",

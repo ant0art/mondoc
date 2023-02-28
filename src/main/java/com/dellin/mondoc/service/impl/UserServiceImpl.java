@@ -97,10 +97,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return mapper.convertValue(getUser(email), UserDTO.class);
 	}
 	
-	//todo Данный метод производит замещение полей пользователя необходимо разделить
-	// метод на 2:
-	//	1. Изменяет данные пользователя с проверкой пароля
-	//	2. Изменяет только пароль пользователя
 	@Override
 	public UserDTO update(String email, UserDTO userDTO) {
 		

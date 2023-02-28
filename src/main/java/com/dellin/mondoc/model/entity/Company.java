@@ -18,13 +18,14 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.NamedAttributeNode;
+import javax.persistence.NamedEntityGraph;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -35,6 +36,8 @@ import javax.persistence.Table;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@NamedEntityGraph(name = "company_entity-graph",
+				  attributeNodes = @NamedAttributeNode("orders"))
 public class Company {
 	
 	@Id
@@ -54,9 +57,9 @@ public class Company {
 																	referencedColumnName = "id")},
 			   inverseJoinColumns = {@JoinColumn(name = "USER_ID",
 												 referencedColumnName = "id")})
-	List<User> users;
+	Set<User> users;
 	
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(cascade = CascadeType.ALL)
 	@JsonManagedReference(value = "company_orders")
 	Collection<Order> orders = new ArrayList<>();
 	
