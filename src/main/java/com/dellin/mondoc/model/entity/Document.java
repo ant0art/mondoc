@@ -18,7 +18,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -52,9 +51,9 @@ public class Document {
 	@Column(columnDefinition = "TEXT")
 	String url;
 	
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(cascade = CascadeType.ALL)
 	@JsonIgnore
-	@JsonManagedReference(value = "oder_documents")
+	@JsonManagedReference(value = "order_documents")
 	Order order;
 	
 	@CreationTimestamp

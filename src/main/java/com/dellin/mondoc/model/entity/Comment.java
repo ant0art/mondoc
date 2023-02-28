@@ -12,7 +12,6 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.util.*;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -21,9 +20,6 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -46,13 +42,10 @@ public class Comment {
 	@JsonManagedReference(value = "order_comments")
 	Order order;
 	
-	@ManyToMany
+	@ManyToOne(cascade = CascadeType.ALL)
 	@JsonIgnore
-	@JoinTable(name = "users_comments", joinColumns = {@JoinColumn(name = "COMMENT_ID",
-																   referencedColumnName = "id")},
-			   inverseJoinColumns = {@JoinColumn(name = "USER_ID",
-												 referencedColumnName = "id")})
-	Collection<User> users = new ArrayList<>();
+	@JsonManagedReference(value = "user_comments")
+	User user;
 	
 	@CreationTimestamp
 	@Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",

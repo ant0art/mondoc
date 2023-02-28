@@ -1,6 +1,7 @@
 package com.dellin.mondoc.model.entity;
 
 import com.dellin.mondoc.model.enums.EntityStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
@@ -74,13 +76,10 @@ public class User implements UserDetails {
 			   joinColumns = {@JoinColumn(name = "USER_ID", referencedColumnName = "id")},
 			   inverseJoinColumns = {@JoinColumn(name = "COMPANY_ID",
 												 referencedColumnName = "id")})
-	Collection<Company> companies = new ArrayList<>();
+	Set<Company> companies = new HashSet<>();
 	
-	@ManyToMany
-	@JoinTable(name = "users_comments",
-			   joinColumns = {@JoinColumn(name = "USER_ID", referencedColumnName = "id")},
-			   inverseJoinColumns = {@JoinColumn(name = "COMMENT_ID",
-												 referencedColumnName = "id")})
+	@OneToMany(cascade = CascadeType.ALL)
+	@JsonBackReference(value = "user_comments")
 	Collection<Comment> comments = new ArrayList<>();
 	
 	@Override
