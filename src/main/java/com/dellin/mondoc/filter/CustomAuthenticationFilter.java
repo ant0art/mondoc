@@ -4,10 +4,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.dellin.mondoc.utils.EncodingUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -21,6 +17,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.util.*;
 import java.util.stream.*;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @Slf4j
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -35,10 +35,8 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 	public Authentication attemptAuthentication(HttpServletRequest request,
 			HttpServletResponse response) throws AuthenticationException {
 		String email = request.getParameter("username");
-		
 		String password = request.getParameter("password");
-		log.info("email is: {}", email);
-		log.info("password is: {}", password);
+		log.info("User [email: {}] started authentication", email);
 		
 		UsernamePasswordAuthenticationToken token =
 				new UsernamePasswordAuthenticationToken(email, password);
@@ -57,9 +55,10 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 				.withSubject(user.getUsername())
 				.withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
 				.withIssuer(request.getRequestURL().toString())
-				.withClaim("roles",
-						user.getAuthorities().stream().map(GrantedAuthority::getAuthority)
-							.collect(Collectors.toList())).sign(algorithm);
+				.withClaim("roles", user.getAuthorities()
+						.stream()
+						.map(GrantedAuthority::getAuthority)
+						.collect(Collectors.toList())).sign(algorithm);
 		
 		String refreshToken = JWT.create()
 				.withSubject(user.getUsername())

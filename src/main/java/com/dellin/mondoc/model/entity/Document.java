@@ -1,7 +1,9 @@
 package com.dellin.mondoc.model.entity;
 
 import com.dellin.mondoc.model.enums.EntityStatus;
+import com.dellin.mondoc.model.enums.OrderDocType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -9,9 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
-import org.springframework.security.core.GrantedAuthority;
+import org.hibernate.annotations.CreationTimestamp;
 
-import java.util.*;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -19,45 +21,49 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Getter
 @Setter
 @Entity
+@Table(name = "documents")
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "roles")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Role implements GrantedAuthority {
+public class Document {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
+	@Column(nullable = false)
 	Long id;
 	
-	@Column(nullable = false, unique = true)
-	String roleName;
+	@Column(name = "doc_uid", nullable = false)
+	String uid;
 	
-	@ManyToMany
+	@Column
+	@Enumerated(value = EnumType.STRING)
+	OrderDocType type;
+	
+	@Column(columnDefinition = "TEXT")
+	String base64;
+	
+	@Column(columnDefinition = "TEXT")
+	String url;
+	
+	@ManyToOne(cascade = CascadeType.ALL)
 	@JsonIgnore
-	@JoinTable(name = "users_roles",
-			   joinColumns = {@JoinColumn(name = "ROLE_ID", referencedColumnName = "id")},
-			   inverseJoinColumns = {@JoinColumn(name = "USER_ID",
-												 referencedColumnName = "id")})
-	List<User> users;
+	@JsonManagedReference(value = "order_documents")
+	Order order;
+	
+	@CreationTimestamp
+	@Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+			updatable = false)
+	LocalDateTime createdAt;
 	
 	@Column(name = "updated_at")
 	LocalDateTime updatedAt;
 	
 	@Enumerated(EnumType.STRING)
 	EntityStatus status;
-	
-	@JsonIgnore
-	@Override
-	public String getAuthority() {
-		return getRoleName();
-	}
 }

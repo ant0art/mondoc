@@ -1,6 +1,7 @@
 package com.dellin.mondoc.model.entity;
 
 import com.dellin.mondoc.model.enums.EntityStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -12,19 +13,22 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
 import java.util.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 @Getter
 @Setter
@@ -38,7 +42,7 @@ public class User implements UserDetails {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(nullable = false)
-	private Long id;
+	Long id;
 	
 	@Column(nullable = false, unique = true)
 	String email;
@@ -55,14 +59,28 @@ public class User implements UserDetails {
 	LocalDateTime updatedAt;
 	
 	@Enumerated(EnumType.STRING)
-	EntityStatus state;
+	EntityStatus status;
 	
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "users_roles",
-			   joinColumns = {@JoinColumn(name = "ROLE_ID", referencedColumnName = "id")},
-			   inverseJoinColumns = {@JoinColumn(name = "USER_ID",
+			   joinColumns = {@JoinColumn(name = "USER_ID", referencedColumnName = "id")},
+			   inverseJoinColumns = {@JoinColumn(name = "ROLE_ID",
 												 referencedColumnName = "id")})
 	Collection<Role> roles = new ArrayList<>();
+	
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	Session session;
+	
+	@ManyToMany
+	@JoinTable(name = "users_companies",
+			   joinColumns = {@JoinColumn(name = "USER_ID", referencedColumnName = "id")},
+			   inverseJoinColumns = {@JoinColumn(name = "COMPANY_ID",
+												 referencedColumnName = "id")})
+	Set<Company> companies = new HashSet<>();
+	
+	@OneToMany(cascade = CascadeType.ALL)
+	@JsonBackReference(value = "user_comments")
+	Collection<Comment> comments = new ArrayList<>();
 	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

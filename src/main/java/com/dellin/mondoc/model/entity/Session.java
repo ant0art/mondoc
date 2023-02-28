@@ -9,9 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
-import org.springframework.security.core.GrantedAuthority;
+import org.hibernate.annotations.CreationTimestamp;
 
-import java.util.*;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -19,45 +19,47 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Getter
 @Setter
 @Entity
+@Table(name = "sessions")
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "roles")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Role implements GrantedAuthority {
+public class Session {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
-	Long id;
+	@Column(nullable = false)
+	private Long id;
 	
-	@Column(nullable = false, unique = true)
-	String roleName;
-	
-	@ManyToMany
 	@JsonIgnore
-	@JoinTable(name = "users_roles",
-			   joinColumns = {@JoinColumn(name = "ROLE_ID", referencedColumnName = "id")},
-			   inverseJoinColumns = {@JoinColumn(name = "USER_ID",
-												 referencedColumnName = "id")})
-	List<User> users;
+	@OneToOne(cascade = CascadeType.ALL)
+	User user;
+	
+	@Column
+	String appkey;
+	
+	@Column(name = "login_dl")
+	String login;
+	
+	@Column(name = "password_dl")
+	String password;
+	
+	@Column(name = "session_dl")
+	String sessionDl;
+	
+	@CreationTimestamp
+	@Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+			updatable = false)
+	LocalDateTime createdAt;
 	
 	@Column(name = "updated_at")
 	LocalDateTime updatedAt;
 	
 	@Enumerated(EnumType.STRING)
 	EntityStatus status;
-	
-	@JsonIgnore
-	@Override
-	public String getAuthority() {
-		return getRoleName();
-	}
 }

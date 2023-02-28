@@ -31,18 +31,25 @@ public class RoleServiceImpl implements RoleService {
 	
 	private final UserService userService;
 	
-	private final ObjectMapper mapper = JsonMapper.builder().addModule(
-			new JavaTimeModule()).build();
+	private final ObjectMapper mapper =
+			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
 	@Override
 	public RoleDTO create(RoleDTO roleDTO) {
-		if (roleDTO.getRoleName() == null || roleDTO.getRoleName().isEmpty()) {
+		String roleName = roleDTO.getRoleName();
+		if (roleName == null || roleName.isEmpty()) {
 			throw new CustomException("Role name can`t be null or empty",
 					HttpStatus.BAD_REQUEST);
 		}
+		roleRepository.findByRoleName(roleName).ifPresent(r -> {
+			throw new CustomException(
+					String.format("Role with name: %s not found", r.getRoleName()),
+					HttpStatus.NOT_FOUND);
+		});
+		
 		//roleDTO --> role
 		Role role = mapper.convertValue(roleDTO, Role.class);
-		updateStatus(role, EntityStatus.CREATED);
+		role.setStatus(EntityStatus.CREATED);
 		log.info("Role: {}  created", role.getRoleName());
 		
 		//role --> roleDTOq
@@ -62,15 +69,16 @@ public class RoleServiceImpl implements RoleService {
 		
 		Role role = getRole(roleName);
 		
-		if (user.getRoles().stream().anyMatch(r -> r.equals(role))) {
+		if (user.getRoles()
+				.stream()
+				.anyMatch(r -> r.equals(role))) {
 			throw new CustomException(
 					String.format("User with email: %s already has a role: %s", email,
 							roleName), HttpStatus.BAD_REQUEST);
 		}
 		user.getRoles().add(role);
 		userService.updateStatus(user, EntityStatus.UPDATED);
-		role.getUsers().add(user);
-		updateStatus(role, EntityStatus.UPDATED);
+		//		updateStatus(role, EntityStatus.UPDATED);
 		userRepository.save(user);
 	}
 	
@@ -82,7 +90,7 @@ public class RoleServiceImpl implements RoleService {
 	}
 	
 	private void updateStatus(Role role, EntityStatus status) {
-		role.setState(status);
+		role.setStatus(status);
 		role.setUpdatedAt(LocalDateTime.now());
 	}
 }

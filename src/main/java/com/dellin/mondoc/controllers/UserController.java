@@ -7,8 +7,6 @@ import com.dellin.mondoc.model.entity.User;
 import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.EncodingUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +27,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.*;
 import java.util.stream.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
@@ -89,10 +89,11 @@ public class UserController {
 						.withExpiresAt(
 								new Date(System.currentTimeMillis() + 60 * 60 * 1000))
 						.withIssuer(request.getRequestURL().toString())
-						.withClaim("roles",
-								user.getRoles().stream().map(Role::getRoleName)
-									.collect(Collectors.toList())).sign(
-								EncodingUtil.getAlgorithm(secret));
+						.withClaim("roles", user.getRoles()
+								.stream()
+								.map(Role::getRoleName)
+								.collect(Collectors.toList()))
+						.sign(EncodingUtil.getAlgorithm(secret));
 				
 				Map<String, String> tokens = new HashMap<>();
 				tokens.put("access_token", accessToken);
