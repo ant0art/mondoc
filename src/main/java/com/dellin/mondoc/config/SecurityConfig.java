@@ -17,7 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
 @Configuration
@@ -56,16 +55,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		http.authorizeRequests()
 				.antMatchers("/api/login/**", "/api/token/refresh/**").permitAll();
 		http.authorizeRequests()
-				.antMatchers("/sessions/**").permitAll()
-				.antMatchers("/comments/**").permitAll()
-				.antMatchers(POST, "/orders/**").permitAll();
+				.antMatchers("/sessions/**").authenticated()
+				.antMatchers("/orders/all/**").authenticated()
+				.antMatchers("/comments/**").authenticated()
+				.antMatchers("/orders/update/**", "/orders/stopUpdate/**")
+				 .hasAnyAuthority("ROLE_ADMIN")
+				.antMatchers("/documents/**").hasAnyAuthority("ROLE_ADMIN")
+				.antMatchers("/companies/**").hasAnyAuthority("ROLE_ADMIN");
 		
 		http.authorizeRequests()
-				.antMatchers(GET, "/api/user/**").hasAnyAuthority("ROLE_USER");
-		http.authorizeRequests()
-				.antMatchers(POST, "/api/user/save/**").hasAnyAuthority("ROLE_ADMIN");
-		http.authorizeRequests()
-				.antMatchers(POST, "/api/role/**").hasAnyAuthority("ROLE_ADMIN");
+				.antMatchers("/api/**").hasAnyAuthority("ROLE_ADMIN")
+				.antMatchers(POST, "/roles/**").hasAnyAuthority("ROLE_ADMIN");
 		http.authorizeRequests()
 				.anyRequest().authenticated().and()
 				.exceptionHandling().authenticationEntryPoint(authEntryPoint);
