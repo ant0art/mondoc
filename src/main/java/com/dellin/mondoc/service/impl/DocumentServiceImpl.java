@@ -42,6 +42,7 @@ public class DocumentServiceImpl implements DocumentService {
 	@Override
 	public void update() {
 		Date programStart = new Date();
+		log.info("Method [update() documents] started to work");
 		
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 		User user = userService.getUser(email);
@@ -59,8 +60,7 @@ public class DocumentServiceImpl implements DocumentService {
 				
 				while (count <= documentList.size() && !thread.isInterrupted()) {
 					try {
-						log.info(
-								"Starting cycle of updating documents at {} element of {}",
+						log.info("Starting cycle of updating documents at [{}] of [{}]",
 								count + 1, documentList.size());
 						Document document = documentList.get(count);
 						
@@ -98,6 +98,7 @@ public class DocumentServiceImpl implements DocumentService {
 								continue;
 							}
 							
+							assert docResponse.body() != null;
 							Collection<DocumentResponse.Data> data =
 									docResponse.body().getData();
 							updateDocData(document, data);
@@ -106,8 +107,8 @@ public class DocumentServiceImpl implements DocumentService {
 						}
 						
 						count++;
-						log.info("Method \"update()\" ended process on " + "doc {} of {}",
-								count, documentList.size());
+						log.info("Method [update() documents] ended process on doc [{}] "
+								+ "of [{}]", count, documentList.size());
 						
 						Thread.sleep(10000L);
 					} catch (InterruptedException | IOException e) {
@@ -117,7 +118,8 @@ public class DocumentServiceImpl implements DocumentService {
 				}
 				Date programEnd = new Date();
 				long ms = programEnd.getTime() - programStart.getTime();
-				log.info("Method finished after {} seconds of working", (ms / 1000L));
+				log.info("Method [update() documents] finished after {} seconds of "
+						+ "working", (ms / 1000L));
 			}
 		};
 		taskThread = new Thread(task);
