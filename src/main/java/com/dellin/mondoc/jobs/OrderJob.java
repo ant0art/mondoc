@@ -34,9 +34,6 @@ public class OrderJob {
 	
 	private static final String DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 	private final SessionService sessionService;
-	
-	//	private final DocumentRepository documentRepository;
-	
 	private final DocumentService documentService;
 	private final OrderService orderService;
 	
@@ -55,22 +52,7 @@ public class OrderJob {
 		/* STEP ONE
 		Get sessionID */
 		
-		SessionDTO sessionDTO = new SessionDTO();
-		sessionDTO.setAppkey(APPKEY);
-		sessionDTO.setLogin(LOGIN);
-		sessionDTO.setPassword(PASS);
-		Call<AuthDellin> login = sessionService.getRemoteData().login(sessionDTO);
-		
-		Response<AuthDellin> response = login.execute();
-		
-		if (!response.isSuccessful()) {
-			throw new IOException(
-					response.errorBody() != null ? response.errorBody().string()
-							: "Unknown error");
-		}
-		
-		assert response.body() != null;
-		String sessionID = response.body().getData().getSessionID();
+		String sessionID = getSessionID();
 		
 		/* STEP TWO
 		
@@ -106,24 +88,23 @@ public class OrderJob {
 					
 					Call<OrderResponse> orders =
 							orderService.getRemoteData().update(requestBuilder.build());
-					Response<OrderResponse> orderResponse = null;
 					try {
-						orderResponse = orders.execute();
+						Response<OrderResponse> orderResponse = orders.execute();
 						log.info("Got the response in {} ms",
 								(new Date().getTime() - start.getTime()) / 1000.);
+			
+					/* STEP THREE
+					Get orders and put every new to DB or else update them */
+						
+						assert orderResponse.body() != null;
+						Collection<OrderResponse.Order> ord =
+								orderResponse.body().getOrders();
+						
+						orderService.createAndUpdateOrders(ord);
+						totalPages = orderResponse.body().getMetadata().getTotalPages();
 					} catch (IOException e) {
 						log.error(e.getMessage());
 					}
-					
-			
-			/* STEP THREE
-			Get orders and put every new to DB or else update them */
-					
-					Collection<OrderResponse.Order> ord =
-							orderResponse.body().getOrders();
-					
-					orderService.createAndUpdateOrders(ord);
-					totalPages = orderResponse.body().getMetadata().getTotalPages();
 					log.info("End of page: [{}]. Total pages: [{}]", currentPage,
 							totalPages);
 					currentPage++;
@@ -147,22 +128,7 @@ public class OrderJob {
 		/* STEP ONE
 		Get sessionID */
 		
-		SessionDTO sessionDTO = new SessionDTO();
-		sessionDTO.setAppkey(APPKEY);
-		sessionDTO.setLogin(LOGIN);
-		sessionDTO.setPassword(PASS);
-		Call<AuthDellin> login = sessionService.getRemoteData().login(sessionDTO);
-		
-		Response<AuthDellin> response = login.execute();
-		
-		if (!response.isSuccessful()) {
-			throw new IOException(
-					response.errorBody() != null ? response.errorBody().string()
-							: "Unknown error");
-		}
-		
-		assert response.body() != null;
-		String sessionID = response.body().getData().getSessionID();
+		String sessionID = getSessionID();
 		
 		/* STEP TWO
 		
@@ -249,5 +215,24 @@ public class OrderJob {
 			}
 		};
 		executorService.scheduleAtFixedRate(task, 0, 10, TimeUnit.SECONDS);
+	}
+	
+	private String getSessionID() throws IOException {
+		SessionDTO sessionDTO = new SessionDTO();
+		sessionDTO.setAppkey(APPKEY);
+		sessionDTO.setLogin(LOGIN);
+		sessionDTO.setPassword(PASS);
+		Call<AuthDellin> login = sessionService.getRemoteData().login(sessionDTO);
+		
+		Response<AuthDellin> response = login.execute();
+		
+		if (!response.isSuccessful()) {
+			throw new IOException(
+					response.errorBody() != null ? response.errorBody().string()
+							: "Unknown error");
+		}
+		
+		assert response.body() != null;
+		return response.body().getData().getSessionID();
 	}
 }
