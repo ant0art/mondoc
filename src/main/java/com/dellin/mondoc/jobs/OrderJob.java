@@ -43,7 +43,7 @@ public class OrderJob {
 	
 	@Scheduled(cron = "0 0 21 ? * *")
 	//	@Scheduled(fixedDelay = 1000000L, initialDelay = 0)
-	public void getOrders() throws IOException, InterruptedException {
+	public void getOrders() throws IOException {
 		
 		log.info("Scheduled method [getOrders] started to work");
 		
@@ -189,7 +189,7 @@ public class OrderJob {
 										? docResponse.errorBody().string()
 										: "Unknown error");
 							} else {
-								
+								assert docResponse.body() != null;
 								Collection<DocumentResponse.Data> data =
 										docResponse.body().getData();
 								documentService.updateDocData(document, data);
