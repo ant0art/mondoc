@@ -22,9 +22,6 @@ import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.EncodingUtil;
 import com.dellin.mondoc.utils.OrderUtil;
 import com.dellin.mondoc.utils.PaginationUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.*;
@@ -53,10 +50,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -70,8 +64,6 @@ public class OrderServiceImpl implements OrderService {
 	private final OrderRepository orderRepository;
 	private final CompanyRepository companyRepository;
 	private final DocumentRepository documentRepository;
-	private final ObjectMapper mapper =
-			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
 	private Thread taskThread;
 	
@@ -83,6 +75,9 @@ public class OrderServiceImpl implements OrderService {
 	@Override
 	@Transactional
 	public void update(OrderRequest orderRequest) throws IOException {
+		
+		log.info("Method [update() orders] started to work");
+		Date programStart = new Date();
 		
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 		User user = userService.getUser(email);
@@ -116,7 +111,15 @@ public class OrderServiceImpl implements OrderService {
 			public void run() {
 				Thread thread = Thread.currentThread();
 				
-				log.info("Starting cycle of updating orders at {} page", currentPage);
+				Integer page = orderRequest.getPage();
+				if (page != null) {
+					log.info("User [EMAIL: {}] chose page [{}] for update",
+							user.getUsername(), page);
+					currentPage = page;
+					totalPages = page;
+				}
+				
+				log.info("Starting cycle of updating orders at [{}] page", currentPage);
 				
 				while (currentPage <= totalPages && !thread.isInterrupted()) {
 					try {
@@ -141,12 +144,12 @@ public class OrderServiceImpl implements OrderService {
 						
 						assert response.body() != null;
 						Collection<OrderResponse.Order> ord = response.body().getOrders();
-						totalPages = response.body().getMetadata().getTotalPages();
-						
 						createAndUpdateOrders(ord);
-						totalPages = response.body().getMetadata().getTotalPages();
+						if (page == null) {
+							totalPages = response.body().getMetadata().getTotalPages();
+						}
 						log.info("End of page: [{}]. Total pages: [{}]", currentPage,
-								totalPages);
+								response.body().getMetadata().getTotalPages());
 						currentPage++;
 						
 						Thread.sleep(10000L);
@@ -155,6 +158,11 @@ public class OrderServiceImpl implements OrderService {
 						thread.interrupt();
 					}
 				}
+				
+				Date programEnd = new Date();
+				long ms = programEnd.getTime() - programStart.getTime();
+				log.info("Method [update() orders] finished after {} seconds of working",
+						(ms / 1000L));
 			}
 		};
 		taskThread = new Thread(task);
@@ -382,19 +390,13 @@ public class OrderServiceImpl implements OrderService {
 			// Install the all-trusting trust manager
 			final SSLContext sslContext = SSLContext.getInstance("SSL");
 			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-			// Create a ssl socket factory with our all-trusting manager
-			final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 			
 			OkHttpClient.Builder builder = new OkHttpClient.Builder();
 			
 			builder.readTimeout(240, TimeUnit.SECONDS)
 				   .connectTimeout(240, TimeUnit.SECONDS)
 				   .writeTimeout(240, TimeUnit.SECONDS)
-				   .hostnameVerifier(new HostnameVerifier() {
-					   public boolean verify(String s, SSLSession sslSession) {
-						   return true;
-					   }
-				   });
+				   .hostnameVerifier((s, sslSession) -> true);
 			
 			return builder.build();
 		} catch (Exception e) {
