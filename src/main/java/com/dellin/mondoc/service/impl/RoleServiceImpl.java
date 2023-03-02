@@ -43,16 +43,16 @@ public class RoleServiceImpl implements RoleService {
 		}
 		roleRepository.findByRoleName(roleName).ifPresent(r -> {
 			throw new CustomException(
-					String.format("Role with name: %s not found", r.getRoleName()),
-					HttpStatus.NOT_FOUND);
+					String.format("Role [NAME: %s] is already exist", r.getRoleName()),
+					HttpStatus.BAD_REQUEST);
 		});
 		
 		//roleDTO --> role
 		Role role = mapper.convertValue(roleDTO, Role.class);
 		role.setStatus(EntityStatus.CREATED);
-		log.info("Role: {}  created", role.getRoleName());
+		log.info("Role: [NAME: {}] was created", role.getRoleName());
 		
-		//role --> roleDTOq
+		//role --> roleDTO
 		return mapper.convertValue(roleRepository.save(role), RoleDTO.class);
 	}
 	
@@ -64,7 +64,7 @@ public class RoleServiceImpl implements RoleService {
 	
 	@Override
 	public void addRoleToUser(String email, String roleName) {
-		log.info("Adding to user with email: {} a role {}", email, roleName);
+		log.info("Adding to user [EMAIL: {}] a role [{}]", email, roleName);
 		User user = userService.getUser(email);
 		
 		Role role = getRole(roleName);
@@ -73,19 +73,20 @@ public class RoleServiceImpl implements RoleService {
 				.stream()
 				.anyMatch(r -> r.equals(role))) {
 			throw new CustomException(
-					String.format("User with email: %s already has a role: %s", email,
+					String.format("User [EMAIL: %s] already has a role: [%s]", email,
 							roleName), HttpStatus.BAD_REQUEST);
 		}
 		user.getRoles().add(role);
 		userService.updateStatus(user, EntityStatus.UPDATED);
-		//		updateStatus(role, EntityStatus.UPDATED);
 		userRepository.save(user);
+		log.info("Role [NAME: {}] was added to user [EMAIL: {}]", role.getRoleName(),
+				user.getEmail());
 	}
 	
 	public Role getRole(String roleName) {
 		return roleRepository.findByRoleName(roleName).orElseThrow(
 				() -> new CustomException(
-						String.format("Role with name: %s not found", roleName),
+						String.format("Role [NAME: %s] not found", roleName),
 						HttpStatus.NOT_FOUND));
 	}
 	
