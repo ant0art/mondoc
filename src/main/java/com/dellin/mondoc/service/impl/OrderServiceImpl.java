@@ -139,8 +139,8 @@ public class OrderServiceImpl implements OrderService {
 						Date start = new Date();
 						log.info("Sending request to API");
 						Response<OrderResponse> response = orders.execute();
-						log.info("Got the response in {} ms",
-								(new Date().getTime() - start.getTime()) / 1000.);
+						long responseTime = new Date().getTime() - start.getTime();
+						log.info("Got the response in {} sec", responseTime / 1000.);
 						
 						assert response.body() != null;
 						Collection<OrderResponse.Order> ord = response.body().getOrders();
@@ -151,8 +151,9 @@ public class OrderServiceImpl implements OrderService {
 						log.info("End of page: [{}]. Total pages: [{}]", currentPage,
 								response.body().getMetadata().getTotalPages());
 						currentPage++;
-						
-						Thread.sleep(10000L);
+						long timeout = 10000L - responseTime;
+						log.info("Timeout before next request {} sec", timeout / 1000.);
+						Thread.sleep(timeout);
 					} catch (InterruptedException | IOException e) {
 						log.error(e.getMessage());
 						thread.interrupt();
