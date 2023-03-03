@@ -45,7 +45,7 @@ public class OrderJob {
 	//	@Scheduled(fixedDelay = 1000000L, initialDelay = 0)
 	public void getOrders() throws IOException {
 		
-		log.info("Scheduled method [getOrders] started to work");
+		log.info("Scheduled method [getOrders()] started to work");
 		
 		Date programStart = new Date();
 		
@@ -80,7 +80,8 @@ public class OrderJob {
 			public void run() {
 				
 				if (currentPage <= totalPages) {
-					log.info("Starting cycle of updating orders at {} page", currentPage);
+					log.info("Starting cycle of updating orders at [{}] page",
+							currentPage);
 					requestBuilder.setPage(currentPage);
 					
 					Date start = new Date();
@@ -90,7 +91,7 @@ public class OrderJob {
 							orderService.getRemoteData().update(requestBuilder.build());
 					try {
 						Response<OrderResponse> orderResponse = orders.execute();
-						log.info("Got the response in {} ms",
+						log.info("Got the response in [{}] sec",
 								(new Date().getTime() - start.getTime()) / 1000.);
 			
 					/* STEP THREE
@@ -111,7 +112,8 @@ public class OrderJob {
 				} else {
 					Date programEnd = new Date();
 					long ms = programEnd.getTime() - programStart.getTime();
-					log.info("Method finished after {} seconds of working", (ms / 1000L));
+					log.info("Method [getOrders()] finished after [{}] sec of working",
+							(ms / 1000L));
 					executorService.shutdown();
 				}
 			}
@@ -123,6 +125,7 @@ public class OrderJob {
 	//	@Scheduled(fixedDelay = 1000000L, initialDelay = 0)
 	public void getAvailableDocs() throws IOException {
 		
+		log.info("Method [getAvailableDocs()] started to work");
 		Date programStart = new Date();
 		
 		/* STEP ONE
@@ -146,15 +149,11 @@ public class OrderJob {
 			
 			@Override
 			public void run() {
-				log.info("Starting cycle of updating documents at {} element of {}",
-						count + 1, byBase64Null.size());
-				
 				Document document = byBase64Null.get(count);
 				
 				if (count <= byBase64Null.size()) {
 					try {
-						log.info(
-								"Starting cycle of updating documents at {} element of {}",
+						log.info("Starting cycle of updating documents at [{}] of [{}]",
 								count + 1, byBase64Null.size());
 						
 						log.info("Current document to update: [ID: {}, TYPE:{}, UID: "
@@ -180,7 +179,7 @@ public class OrderJob {
 						try {
 							Response<DocumentResponse> docResponse =
 									availableDoc.execute();
-							log.info("Got the response in {} ms",
+							log.info("Got the response in [{}] sec",
 									(new Date().getTime() - start.getTime()) / 1000.);
 							
 							if (!docResponse.isSuccessful()) {
@@ -199,9 +198,8 @@ public class OrderJob {
 						}
 						
 						count++;
-						log.info(
-								"Scheduled method \"getAvailableDocs()\" ended process on "
-										+ "doc {} of {}", count, byBase64Null.size());
+						log.info("Scheduled method [getAvailableDocs()] ended process on "
+								+ "doc {} of {}", count, byBase64Null.size());
 					} catch (IOException e) {
 						log.error(e.getMessage());
 					}
@@ -209,7 +207,8 @@ public class OrderJob {
 					
 					Date programEnd = new Date();
 					long ms = programEnd.getTime() - programStart.getTime();
-					log.info("Method finished after {} seconds of working", (ms / 1000L));
+					log.info("Method [getAvailableDocs()] finished after [{}] sec of "
+							+ "working", (ms / 1000L));
 					executorService.shutdown();
 				}
 			}

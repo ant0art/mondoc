@@ -20,6 +20,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedAttributeNode;
 import javax.persistence.NamedEntityGraph;
@@ -29,7 +30,8 @@ import javax.persistence.Table;
 @Getter
 @Setter
 @Entity
-@Table(name = "orders")
+@Table(name = "orders",
+	   indexes = @Index(name = "idx_uid", columnList = "uid", unique = true))
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
