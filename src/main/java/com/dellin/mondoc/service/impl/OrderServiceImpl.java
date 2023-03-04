@@ -68,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
 	private Thread taskThread;
 	
 	@Value("${api.address}")
-	private String baseUrlFid;
+	private String baseUrlFid = "https://api.dellin.ru";
 	
 	private IInterfaceManualLoad iInterfaceManualLoad;
 	
@@ -111,19 +111,31 @@ public class OrderServiceImpl implements OrderService {
 			public void run() {
 				Thread thread = Thread.currentThread();
 				
-				Integer page = orderRequest.getPage();
-				if (page != null) {
-					log.info("User [EMAIL: {}] chose page [{}] for update",
-							user.getUsername(), page);
-					currentPage = page;
-					totalPages = page;
-				}
-				
-				log.info("Starting cycle of updating orders at [{}] page", currentPage);
-				
-				while (currentPage <= totalPages && !thread.isInterrupted()) {
-					try {
-						requestBuilder.setPage(currentPage);
+				extracted(thread, orderRequest, user, currentPage, totalPages,
+						requestBuilder, programStart);
+			}
+		};
+		taskThread = new Thread(task);
+		taskThread.start();
+	}
+	
+	@Override
+	public void extracted(Thread thread, OrderRequest orderRequest, User user,
+			int currentPage, int totalPages, OrderRequestBuilder requestBuilder,
+			Date programStart) {
+		Integer page = orderRequest.getPage();
+		if (page != null) {
+			log.info("User [EMAIL: {}] chose page [{}] for update", user.getUsername(),
+					page);
+			currentPage = page;
+			totalPages = page;
+		}
+		
+		log.info("Starting cycle of updating orders at [{}] page", currentPage);
+		
+		while (currentPage <= totalPages && !thread.isInterrupted()) {
+			try {
+				requestBuilder.setPage(currentPage);
 					
 					/*
 					User can update database by two different ways:
@@ -131,43 +143,43 @@ public class OrderServiceImpl implements OrderService {
 					2. Including dates from-to, setting the range by it
 					These ways exclude each other from the request
 					* */
-						
-						OrderRequest build = requestBuilder.build();
-						
-						Call<OrderResponse> orders = getRemoteData().update(build);
-						
-						Date start = new Date();
-						log.info("Sending request to API");
-						Response<OrderResponse> response = orders.execute();
-						long responseTime = new Date().getTime() - start.getTime();
-						log.info("Got the response in {} sec", responseTime / 1000.);
-						
-						assert response.body() != null;
-						Collection<OrderResponse.Order> ord = response.body().getOrders();
-						createAndUpdateOrders(ord);
-						if (page == null) {
-							totalPages = response.body().getMetadata().getTotalPages();
-						}
-						log.info("End of page: [{}]. Total pages: [{}]", currentPage,
-								response.body().getMetadata().getTotalPages());
-						currentPage++;
-						long timeout = 10000L - responseTime;
-						log.info("Timeout before next request {} sec", timeout / 1000.);
-						Thread.sleep(timeout);
-					} catch (InterruptedException | IOException e) {
-						log.error(e.getMessage());
-						thread.interrupt();
-					}
-				}
 				
-				Date programEnd = new Date();
-				long ms = programEnd.getTime() - programStart.getTime();
-				log.info("Method [update() orders] finished after {} seconds of working",
-						(ms / 1000L));
+				OrderRequest build = requestBuilder.build();
+				
+				Call<OrderResponse> orders = getRemoteData().update(build);
+				
+				Date start = new Date();
+				log.info("Sending request to API");
+				Response<OrderResponse> response = orders.execute();
+				long responseTime = new Date().getTime() - start.getTime();
+				log.info("Got the response in {} sec", responseTime / 1000.);
+				
+				//				assert response.body() != null;
+				if (response.body() == null) {
+					throw new CustomException("Response body is empty",
+							HttpStatus.BAD_REQUEST);
+				}
+				Collection<OrderResponse.Order> ord = response.body().getOrders();
+				createAndUpdateOrders(ord);
+				if (page == null) {
+					totalPages = response.body().getMetadata().getTotalPages();
+				}
+				log.info("End of page: [{}]. Total pages: [{}]", currentPage,
+						response.body().getMetadata().getTotalPages());
+				currentPage++;
+				long timeout = 10000L - responseTime;
+				log.info("Timeout before next request {} sec", timeout / 1000.);
+				Thread.sleep(timeout);
+			} catch (InterruptedException | IOException e) {
+				log.error(e.getMessage());
+				thread.interrupt();
 			}
-		};
-		taskThread = new Thread(task);
-		taskThread.start();
+		}
+		
+		Date programEnd = new Date();
+		long ms = programEnd.getTime() - programStart.getTime();
+		log.info("Method [update() orders] finished after {} seconds of working",
+				(ms / 1000L));
 	}
 	
 	@Override

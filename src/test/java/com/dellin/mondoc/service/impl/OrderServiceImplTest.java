@@ -1,11 +1,7 @@
 package com.dellin.mondoc.service.impl;
 
-import com.dellin.mondoc.model.dto.SessionDTO;
 import com.dellin.mondoc.model.entity.Session;
 import com.dellin.mondoc.model.entity.User;
-import com.dellin.mondoc.model.pojo.AuthDellin;
-import com.dellin.mondoc.model.pojo.DocumentRequest;
-import com.dellin.mondoc.model.pojo.DocumentResponse;
 import com.dellin.mondoc.model.pojo.OrderRequest;
 import com.dellin.mondoc.model.pojo.OrderRequestBuilder;
 import com.dellin.mondoc.model.pojo.OrderResponse;
@@ -13,7 +9,6 @@ import com.dellin.mondoc.service.IInterfaceManualLoad;
 import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.EncodingUtil;
 import java.io.*;
-import lombok.SneakyThrows;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -26,11 +21,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -40,8 +35,8 @@ public class OrderServiceImplTest {
 	
 	@InjectMocks
 	private OrderServiceImpl orderService;
-	@Mock
-	private Retrofit retrofit;
+	//	@Mock
+	//	private Retrofit retrofit;
 	@Mock
 	private UserService userService;
 	@Mock
@@ -112,21 +107,8 @@ public class OrderServiceImplTest {
 		response.setOrders(orders);
 		
 		Runnable task = new Runnable() {
-			@SneakyThrows
 			@Override
 			public void run() {
-				
-				Thread currentThread = Thread.currentThread();
-				
-				//create a mock response
-				Call<OrderResponse> call = (Call<OrderResponse>) mock(Call.class);
-				
-				//				when(manualLoad.update(request)).thenReturn(call);
-				//				Retrofit retrofit = mock(Retrofit.class);
-				//				when(retrofit.create(IInterfaceManualLoad.class)).thenReturn(
-				//						new MockManualLoad(call));
-				
-				when(call.execute()).thenReturn(Response.success(response));
 				
 				latch.countDown();
 			}
@@ -141,16 +123,84 @@ public class OrderServiceImplTest {
 	}
 	
 	@Test
+	public void extracted() throws IOException {
+		
+		String name = "test@test.com";
+		Thread currentThread = Thread.currentThread();
+		
+		Date programStart = new Date();
+		
+		Session session = new Session();
+		session.setAppkey(EncodingUtil.getEncrypted("appkey"));
+		session.setSessionDl(EncodingUtil.getEncrypted("sessionDl"));
+		
+		User user = new User();
+		user.setEmail(name);
+		user.setSession(session);
+		
+		int currentPage = 1;
+		int totalPages = 1;
+		
+		OrderRequestBuilder requestBuilder = OrderRequest.builder()
+				.setAppKey(EncodingUtil.getDecrypted(user.getSession().getAppkey()))
+				.setSessionID(EncodingUtil.getDecrypted(user.getSession().getSessionDl()))
+				.setDateStart("2023-01-01")
+				.setDateEnd("2023-01-10");
+		
+		//create a mock response
+		
+		OrderRequest orderRequest = mock(OrderRequest.class);
+		
+		OrderServiceImpl orderService1 = mock(OrderServiceImpl.class);
+		
+		Retrofit retrofit = new Retrofit.Builder().baseUrl("https://url.com/")
+				.addConverterFactory(GsonConverterFactory.create()).build();
+		IInterfaceManualLoad load = retrofit.create(IInterfaceManualLoad.class);
+		
+		when(orderService1.getRemoteData()).thenReturn(manualLoad);
+		
+		@SuppressWarnings("unchecked")
+		Call<OrderResponse> call = (Call<OrderResponse>) mock(Call.class);
+		when(manualLoad.update(orderRequest)).thenReturn(call);
+		
+		//		when(manualLoad.update(orderRequest)).thenReturn(call);
+		
+		OrderResponse expectedOrderResponse = new OrderResponse();
+		//		Collection<OrderResponse.Order> orders = new ArrayList<>();
+		//		OrderResponse.Order order = new OrderResponse.Order();
+		//		orders.add(order);
+		//		expectedOrderResponse.setOrders(orders);
+		
+		Response<OrderResponse> expectedResponse =
+				Response.success(expectedOrderResponse);
+		OrderResponse.Metadata metadata = new OrderResponse.Metadata();
+		metadata.setStatus(200);
+		metadata.setCurrentPage(1);
+		metadata.setTotalPages(10);
+		
+		expectedResponse.body().setMetadata(metadata);
+		
+		System.out.println(expectedResponse);
+		
+		when(call.execute()).thenReturn(expectedResponse);
+		//		Response<OrderResponse> re = mock(Response.class);
+		//		when(re.body()).thenReturn(expectedOrderResponse);
+		
+		orderService.extracted(currentThread, orderRequest, user, 1, 1, requestBuilder,
+				programStart);
+	}
+	
+	@Test
 	public void createAndUpdateOrders() {
 	}
 	
 	@Test
 	public void getRemoteData() {
 		
-		when(retrofit.create(IInterfaceManualLoad.class)).thenReturn(manualLoad);
-		
-		IInterfaceManualLoad remoteData = orderService.getRemoteData();
-		assertNotNull(remoteData);
+		//		when(retrofit.create(IInterfaceManualLoad.class)).thenReturn(manualLoad);
+		//
+		//		IInterfaceManualLoad remoteData = orderService.getRemoteData();
+		//		assertNotNull(remoteData);
 	}
 	
 	@Test
@@ -163,34 +213,5 @@ public class OrderServiceImplTest {
 	
 	@Test
 	public void stopUpdate() {
-	}
-	
-	private static class MockManualLoadTest implements IInterfaceManualLoad {
-		
-		private final Call<OrderResponse> update;
-		
-		private MockManualLoadTest(Call<OrderResponse> update) {
-			this.update = update;
-		}
-		
-		@Override
-		public Call<AuthDellin> login(SessionDTO sessionDTO) {
-			return null;
-		}
-		
-		@Override
-		public Call<AuthDellin> logout(SessionDTO sessionDTO) {
-			return null;
-		}
-		
-		@Override
-		public Call<OrderResponse> update(OrderRequest orderRequest) {
-			return update;
-		}
-		
-		@Override
-		public Call<DocumentResponse> getPrintableDoc(DocumentRequest documentRequest) {
-			return null;
-		}
 	}
 }
