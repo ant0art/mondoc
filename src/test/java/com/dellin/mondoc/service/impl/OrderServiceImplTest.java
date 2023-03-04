@@ -1,5 +1,10 @@
 package com.dellin.mondoc.service.impl;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.dellin.mondoc.model.entity.Session;
 import com.dellin.mondoc.model.entity.User;
 import com.dellin.mondoc.model.pojo.OrderRequest;
@@ -8,7 +13,12 @@ import com.dellin.mondoc.model.pojo.OrderResponse;
 import com.dellin.mondoc.service.IInterfaceManualLoad;
 import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.EncodingUtil;
-import java.io.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.concurrent.CountDownLatch;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -23,13 +33,6 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-import java.util.*;
-import java.util.concurrent.*;
-
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
 public class OrderServiceImplTest {
 	
@@ -41,6 +44,9 @@ public class OrderServiceImplTest {
 	private UserService userService;
 	@Mock
 	private IInterfaceManualLoad manualLoad;
+
+	@Mock
+	private SyncService syncService;
 	
 	//	private OrderRepository orderRepository;
 	//	private CompanyRepository companyRepository;
@@ -157,7 +163,7 @@ public class OrderServiceImplTest {
 				.addConverterFactory(GsonConverterFactory.create()).build();
 		IInterfaceManualLoad load = retrofit.create(IInterfaceManualLoad.class);
 		
-		when(orderService1.getRemoteData()).thenReturn(manualLoad);
+		//when(orderService1.getRemoteData()).thenReturn(manualLoad);
 		
 		@SuppressWarnings("unchecked")
 		Call<OrderResponse> call = (Call<OrderResponse>) mock(Call.class);
@@ -186,6 +192,55 @@ public class OrderServiceImplTest {
 		//		Response<OrderResponse> re = mock(Response.class);
 		//		when(re.body()).thenReturn(expectedOrderResponse);
 		
+		orderService.extracted(currentThread, orderRequest, user, 1, 1, requestBuilder,
+				programStart);
+	}
+
+	@Test
+	public void extracted_2() throws IOException {
+
+		String name = "test@test.com";
+		Thread currentThread = Thread.currentThread();
+
+		Date programStart = new Date();
+
+		Session session = new Session();
+		session.setAppkey(EncodingUtil.getEncrypted("appkey"));
+		session.setSessionDl(EncodingUtil.getEncrypted("sessionDl"));
+
+		User user = new User();
+		user.setEmail(name);
+		user.setSession(session);
+
+		int currentPage = 1;
+		int totalPages = 1;
+
+		OrderRequestBuilder requestBuilder = OrderRequest.builder()
+				.setAppKey(EncodingUtil.getDecrypted(user.getSession().getAppkey()))
+				.setSessionID(EncodingUtil.getDecrypted(user.getSession().getSessionDl()))
+				.setDateStart("2023-01-01")
+				.setDateEnd("2023-01-10");
+
+		//create a mock response
+		OrderRequest orderRequest = requestBuilder.build();
+		SyncService.IInterfaceManualLoad remoteData = mock(SyncService.IInterfaceManualLoad.class);
+		when(syncService.getRemoteData()).thenReturn(remoteData);
+		Call<OrderResponse> update = mock(Call.class);
+		when(remoteData.update(any(OrderRequest.class))).thenReturn(update);
+
+		OrderResponse body = new OrderResponse();
+		body.setOrders(Collections.emptyList());
+		body.setDeleted(Collections.emptyList());
+
+		OrderResponse.Metadata metadata = new OrderResponse.Metadata();
+		metadata.setStatus(200);
+		metadata.setCurrentPage(1);
+		metadata.setTotalPages(10);
+
+		body.setMetadata(metadata);
+		Response<OrderResponse> success = Response.success(body);
+		when(update.execute()).thenReturn(success);
+
 		orderService.extracted(currentThread, orderRequest, user, 1, 1, requestBuilder,
 				programStart);
 	}

@@ -22,7 +22,7 @@ public interface OrderService {
 	
 	void createAndUpdateOrders(Collection<OrderResponse.Order> orders);
 	
-	IInterfaceManualLoad getRemoteData();
+	//IInterfaceManualLoad getRemoteData();
 	
 	Order getOrder(String docId);
 	

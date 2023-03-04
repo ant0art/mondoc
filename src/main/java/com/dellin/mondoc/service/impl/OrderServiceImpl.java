@@ -16,23 +16,28 @@ import com.dellin.mondoc.model.pojo.OrderResponse;
 import com.dellin.mondoc.model.repository.CompanyRepository;
 import com.dellin.mondoc.model.repository.DocumentRepository;
 import com.dellin.mondoc.model.repository.OrderRepository;
-import com.dellin.mondoc.service.IInterfaceManualLoad;
 import com.dellin.mondoc.service.OrderService;
 import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.EncodingUtil;
 import com.dellin.mondoc.utils.OrderUtil;
 import com.dellin.mondoc.utils.PaginationUtil;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import java.io.*;
+import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -43,16 +48,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.ModelMap;
 import retrofit2.Call;
 import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
-
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.*;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 @Slf4j
 @Service
@@ -66,11 +61,13 @@ public class OrderServiceImpl implements OrderService {
 	private final DocumentRepository documentRepository;
 	
 	private Thread taskThread;
+
+	private final SyncService syncService;
 	
-	@Value("${api.address}")
-	private String baseUrlFid = "https://api.dellin.ru";
-	
-	private IInterfaceManualLoad iInterfaceManualLoad;
+	//@Value("${api.address}")
+	//private String baseUrlFid = "https://api.dellin.ru";
+	//
+	//private IInterfaceManualLoad iInterfaceManualLoad;
 	
 	@Override
 	@Transactional
@@ -146,7 +143,9 @@ public class OrderServiceImpl implements OrderService {
 				
 				OrderRequest build = requestBuilder.build();
 				
-				Call<OrderResponse> orders = getRemoteData().update(build);
+				Call<OrderResponse> orders = syncService
+						.getRemoteData()
+						.update(build);
 				
 				Date start = new Date();
 				log.info("Sending request to API");
@@ -288,20 +287,20 @@ public class OrderServiceImpl implements OrderService {
 		});
 	}
 	
-	@Override
-	public IInterfaceManualLoad getRemoteData() {
-		
-		Gson gson = new GsonBuilder().setLenient().create();
-		
-		if (iInterfaceManualLoad == null) {
-			Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrlFid)
-					.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-					.addConverterFactory(GsonConverterFactory.create(gson))
-					.client(getUnsafeOkHttpClient()).build();
-			iInterfaceManualLoad = retrofit.create(IInterfaceManualLoad.class);
-		}
-		return iInterfaceManualLoad;
-	}
+	//@Override
+	//public IInterfaceManualLoad getRemoteData() {
+	//
+	//	Gson gson = new GsonBuilder().setLenient().create();
+	//
+	//	if (iInterfaceManualLoad == null) {
+	//		Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrlFid)
+	//				.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+	//				.addConverterFactory(GsonConverterFactory.create(gson))
+	//				.client(getUnsafeOkHttpClient()).build();
+	//		iInterfaceManualLoad = retrofit.create(IInterfaceManualLoad.class);
+	//	}
+	//	return iInterfaceManualLoad;
+	//}
 	
 	@Override
 	public Order getOrder(String docId) {

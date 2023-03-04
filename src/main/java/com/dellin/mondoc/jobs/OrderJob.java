@@ -12,6 +12,7 @@ import com.dellin.mondoc.model.pojo.OrderResponse;
 import com.dellin.mondoc.service.DocumentService;
 import com.dellin.mondoc.service.OrderService;
 import com.dellin.mondoc.service.SessionService;
+import com.dellin.mondoc.service.impl.SyncService;
 import com.dellin.mondoc.utils.OrderUtil;
 import java.io.*;
 import java.time.LocalDate;
@@ -36,7 +37,8 @@ public class OrderJob {
 	private final SessionService sessionService;
 	private final DocumentService documentService;
 	private final OrderService orderService;
-	
+	private final SyncService syncService;
+
 	private final String APPKEY = System.getenv("appkey");
 	private final String LOGIN = System.getenv("loginDl");
 	private final String PASS = System.getenv("passDl");
@@ -88,7 +90,7 @@ public class OrderJob {
 					log.info("Sending request to API");
 					
 					Call<OrderResponse> orders =
-							orderService.getRemoteData().update(requestBuilder.build());
+							syncService.getRemoteData().update(requestBuilder.build());
 					try {
 						Response<OrderResponse> orderResponse = orders.execute();
 						log.info("Got the response in [{}] sec",
@@ -100,7 +102,7 @@ public class OrderJob {
 						assert orderResponse.body() != null;
 						Collection<OrderResponse.Order> ord =
 								orderResponse.body().getOrders();
-						
+
 						orderService.createAndUpdateOrders(ord);
 						totalPages = orderResponse.body().getMetadata().getTotalPages();
 					} catch (IOException e) {
@@ -174,7 +176,7 @@ public class OrderJob {
 						Date start = new Date();
 						log.info("Sending request to API");
 						Call<DocumentResponse> availableDoc =
-								orderService.getRemoteData().getPrintableDoc(build);
+								syncService.getRemoteData().getPrintableDoc(build);
 						
 						try {
 							Response<DocumentResponse> docResponse =
