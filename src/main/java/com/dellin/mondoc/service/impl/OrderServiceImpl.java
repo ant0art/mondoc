@@ -16,23 +16,16 @@ import com.dellin.mondoc.model.pojo.OrderResponse;
 import com.dellin.mondoc.model.repository.CompanyRepository;
 import com.dellin.mondoc.model.repository.DocumentRepository;
 import com.dellin.mondoc.model.repository.OrderRepository;
-import com.dellin.mondoc.service.IInterfaceManualLoad;
 import com.dellin.mondoc.service.OrderService;
 import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.EncodingUtil;
 import com.dellin.mondoc.utils.OrderUtil;
 import com.dellin.mondoc.utils.PaginationUtil;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import java.io.*;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.OkHttpClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -43,16 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.ModelMap;
 import retrofit2.Call;
 import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.stream.*;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 @Slf4j
 @Service
@@ -64,13 +50,9 @@ public class OrderServiceImpl implements OrderService {
 	private final OrderRepository orderRepository;
 	private final CompanyRepository companyRepository;
 	private final DocumentRepository documentRepository;
-	
+	private final SyncService syncService;
 	private Thread taskThread;
-	
-	@Value("${api.address}")
-	private String baseUrlFid;
-	
-	private IInterfaceManualLoad iInterfaceManualLoad;
+	private boolean initializedThread = false;
 	
 	@Override
 	@Transactional
@@ -111,19 +93,35 @@ public class OrderServiceImpl implements OrderService {
 			public void run() {
 				Thread thread = Thread.currentThread();
 				
-				Integer page = orderRequest.getPage();
-				if (page != null) {
-					log.info("User [EMAIL: {}] chose page [{}] for update",
-							user.getUsername(), page);
-					currentPage = page;
-					totalPages = page;
-				}
-				
-				log.info("Starting cycle of updating orders at [{}] page", currentPage);
-				
-				while (currentPage <= totalPages && !thread.isInterrupted()) {
-					try {
-						requestBuilder.setPage(currentPage);
+				extracted(thread, orderRequest, user, currentPage, totalPages,
+						requestBuilder, programStart);
+			}
+		};
+		
+		if (!initializedThread) {
+			initializedThread = true;
+			taskThread = new Thread(task);
+			taskThread.start();
+		}
+	}
+	
+	@Override
+	public void extracted(Thread thread, OrderRequest orderRequest, User user,
+			int currentPage, int totalPages, OrderRequestBuilder requestBuilder,
+			Date programStart) {
+		Integer page = orderRequest.getPage();
+		if (page != null) {
+			log.info("User [EMAIL: {}] chose page [{}] for update", user.getUsername(),
+					page);
+			currentPage = page;
+			totalPages = page;
+		}
+		
+		log.info("Starting cycle of updating orders at [{}] page", currentPage);
+		
+		while (currentPage <= totalPages && !thread.isInterrupted()) {
+			try {
+				requestBuilder.setPage(currentPage);
 					
 					/*
 					User can update database by two different ways:
@@ -131,43 +129,43 @@ public class OrderServiceImpl implements OrderService {
 					2. Including dates from-to, setting the range by it
 					These ways exclude each other from the request
 					* */
-						
-						OrderRequest build = requestBuilder.build();
-						
-						Call<OrderResponse> orders = getRemoteData().update(build);
-						
-						Date start = new Date();
-						log.info("Sending request to API");
-						Response<OrderResponse> response = orders.execute();
-						long responseTime = new Date().getTime() - start.getTime();
-						log.info("Got the response in {} sec", responseTime / 1000.);
-						
-						assert response.body() != null;
-						Collection<OrderResponse.Order> ord = response.body().getOrders();
-						createAndUpdateOrders(ord);
-						if (page == null) {
-							totalPages = response.body().getMetadata().getTotalPages();
-						}
-						log.info("End of page: [{}]. Total pages: [{}]", currentPage,
-								response.body().getMetadata().getTotalPages());
-						currentPage++;
-						long timeout = 10000L - responseTime;
-						log.info("Timeout before next request {} sec", timeout / 1000.);
-						Thread.sleep(timeout);
-					} catch (InterruptedException | IOException e) {
-						log.error(e.getMessage());
-						thread.interrupt();
-					}
-				}
 				
-				Date programEnd = new Date();
-				long ms = programEnd.getTime() - programStart.getTime();
-				log.info("Method [update() orders] finished after {} seconds of working",
-						(ms / 1000L));
+				OrderRequest build = requestBuilder.build();
+				
+				Call<OrderResponse> orders = syncService.getRemoteData().update(build);
+				
+				Date start = new Date();
+				log.info("Sending request to API");
+				Response<OrderResponse> response = orders.execute();
+				long responseTime = new Date().getTime() - start.getTime();
+				log.info("Got the response in {} sec", responseTime / 1000.);
+				
+				//				assert response.body() != null;
+				if (response.body() == null) {
+					throw new CustomException("Response body is empty",
+							HttpStatus.BAD_REQUEST);
+				}
+				Collection<OrderResponse.Order> ord = response.body().getOrders();
+				createAndUpdateOrders(ord);
+				if (page == null) {
+					totalPages = response.body().getMetadata().getTotalPages();
+				}
+				log.info("End of page: [{}]. Total pages: [{}]", currentPage,
+						response.body().getMetadata().getTotalPages());
+				currentPage++;
+				long timeout = 10000L - responseTime;
+				log.info("Timeout before next request {} sec", timeout / 1000.);
+				Thread.sleep(timeout);
+			} catch (InterruptedException | IOException e) {
+				log.error(e.getMessage());
+				thread.interrupt();
 			}
-		};
-		taskThread = new Thread(task);
-		taskThread.start();
+		}
+		
+		Date programEnd = new Date();
+		long ms = programEnd.getTime() - programStart.getTime();
+		log.info("Method [update() orders] finished after {} seconds of working",
+				(ms / 1000L));
 	}
 	
 	@Override
@@ -277,21 +275,6 @@ public class OrderServiceImpl implements OrderService {
 	}
 	
 	@Override
-	public IInterfaceManualLoad getRemoteData() {
-		
-		Gson gson = new GsonBuilder().setLenient().create();
-		
-		if (iInterfaceManualLoad == null) {
-			Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrlFid)
-					.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-					.addConverterFactory(GsonConverterFactory.create(gson))
-					.client(getUnsafeOkHttpClient()).build();
-			iInterfaceManualLoad = retrofit.create(IInterfaceManualLoad.class);
-		}
-		return iInterfaceManualLoad;
-	}
-	
-	@Override
 	public Order getOrder(String docId) {
 		return orderRepository.findByDocId(docId).orElseThrow(() -> new CustomException(
 				String.format("Order with ID: %s not found", docId),
@@ -365,43 +348,18 @@ public class OrderServiceImpl implements OrderService {
 	@Override
 	public void stopUpdate() {
 		
-		taskThread.interrupt();
-		log.warn("Update was manually stopped");
+		if (initializedThread) {
+			initializedThread = false;
+			taskThread.interrupt();
+			log.warn("Update was manually stopped");
+		}
 	}
 	
-	private OkHttpClient getUnsafeOkHttpClient() {
-		try {
-			// Create a trust manager that does not validate certificate chains
-			final TrustManager[] trustAllCerts =
-					new TrustManager[]{new X509TrustManager() {
-						
-						public void checkClientTrusted(X509Certificate[] x509Certificates,
-								String s) throws CertificateException {
-						}
-						
-						public void checkServerTrusted(X509Certificate[] x509Certificates,
-								String s) throws CertificateException {
-						}
-						
-						public X509Certificate[] getAcceptedIssuers() {
-							return new X509Certificate[]{};
-						}
-					}};
-			
-			// Install the all-trusting trust manager
-			final SSLContext sslContext = SSLContext.getInstance("SSL");
-			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-			
-			OkHttpClient.Builder builder = new OkHttpClient.Builder();
-			
-			builder.readTimeout(240, TimeUnit.SECONDS)
-				   .connectTimeout(240, TimeUnit.SECONDS)
-				   .writeTimeout(240, TimeUnit.SECONDS)
-				   .hostnameVerifier((s, sslSession) -> true);
-			
-			return builder.build();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+	public void setTaskThread(Thread thread) {
+		this.taskThread = thread;
+	}
+	
+	public void setInitializedThread(boolean initializedThread) {
+		this.initializedThread = initializedThread;
 	}
 }

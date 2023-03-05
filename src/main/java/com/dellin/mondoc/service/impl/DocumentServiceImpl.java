@@ -11,20 +11,21 @@ import com.dellin.mondoc.model.pojo.DocumentRequestBuilder;
 import com.dellin.mondoc.model.pojo.DocumentResponse;
 import com.dellin.mondoc.model.repository.DocumentRepository;
 import com.dellin.mondoc.service.DocumentService;
-import com.dellin.mondoc.service.OrderService;
 import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.EncodingUtil;
-import java.io.*;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import retrofit2.Call;
 import retrofit2.Response;
-
-import java.util.*;
-import java.util.stream.*;
 
 @Service
 @Slf4j
@@ -35,7 +36,7 @@ public class DocumentServiceImpl implements DocumentService {
 	
 	private final DocumentRepository documentRepository;
 	
-	private final OrderService orderService;
+	private final SyncService syncService;
 	
 	private Thread taskThread;
 	
@@ -80,7 +81,7 @@ public class DocumentServiceImpl implements DocumentService {
 						Date start = new Date();
 						log.info("Sending request to API");
 						Call<DocumentResponse> availableDoc =
-								orderService.getRemoteData().getPrintableDoc(build);
+								syncService.getRemoteData().getPrintableDoc(build);
 						
 						try {
 							Response<DocumentResponse> docResponse =
