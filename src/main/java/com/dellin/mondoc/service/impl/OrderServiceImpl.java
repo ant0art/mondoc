@@ -52,6 +52,7 @@ public class OrderServiceImpl implements OrderService {
 	private final DocumentRepository documentRepository;
 	private final SyncService syncService;
 	private Thread taskThread;
+	private boolean initializedThread = false;
 	
 	@Override
 	@Transactional
@@ -96,8 +97,12 @@ public class OrderServiceImpl implements OrderService {
 						requestBuilder, programStart);
 			}
 		};
-		taskThread = new Thread(task);
-		taskThread.start();
+		
+		if (!initializedThread) {
+			initializedThread = true;
+			taskThread = new Thread(task);
+			taskThread.start();
+		}
 	}
 	
 	@Override
@@ -343,7 +348,18 @@ public class OrderServiceImpl implements OrderService {
 	@Override
 	public void stopUpdate() {
 		
-		taskThread.interrupt();
-		log.warn("Update was manually stopped");
+		if (initializedThread) {
+			initializedThread = false;
+			taskThread.interrupt();
+			log.warn("Update was manually stopped");
+		}
+	}
+	
+	public void setTaskThread(Thread thread) {
+		this.taskThread = thread;
+	}
+	
+	public void setInitializedThread(boolean initializedThread) {
+		this.initializedThread = initializedThread;
 	}
 }
