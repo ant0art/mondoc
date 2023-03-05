@@ -11,7 +11,7 @@ import com.dellin.mondoc.model.pojo.OrderRequestBuilder;
 import com.dellin.mondoc.model.pojo.OrderResponse;
 import com.dellin.mondoc.service.DocumentService;
 import com.dellin.mondoc.service.OrderService;
-import com.dellin.mondoc.service.SessionService;
+import com.dellin.mondoc.service.impl.SyncService;
 import com.dellin.mondoc.utils.OrderUtil;
 import java.io.*;
 import java.time.LocalDate;
@@ -33,9 +33,9 @@ import java.util.concurrent.*;
 public class OrderJob {
 	
 	private static final String DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-	private final SessionService sessionService;
 	private final DocumentService documentService;
 	private final OrderService orderService;
+	private final SyncService syncService;
 	
 	private final String APPKEY = System.getenv("appkey");
 	private final String LOGIN = System.getenv("loginDl");
@@ -88,7 +88,7 @@ public class OrderJob {
 					log.info("Sending request to API");
 					
 					Call<OrderResponse> orders =
-							orderService.getRemoteData().update(requestBuilder.build());
+							syncService.getRemoteData().update(requestBuilder.build());
 					try {
 						Response<OrderResponse> orderResponse = orders.execute();
 						log.info("Got the response in [{}] sec",
@@ -174,7 +174,7 @@ public class OrderJob {
 						Date start = new Date();
 						log.info("Sending request to API");
 						Call<DocumentResponse> availableDoc =
-								orderService.getRemoteData().getPrintableDoc(build);
+								syncService.getRemoteData().getPrintableDoc(build);
 						
 						try {
 							Response<DocumentResponse> docResponse =
@@ -221,7 +221,7 @@ public class OrderJob {
 		sessionDTO.setAppkey(APPKEY);
 		sessionDTO.setLogin(LOGIN);
 		sessionDTO.setPassword(PASS);
-		Call<AuthDellin> login = sessionService.getRemoteData().login(sessionDTO);
+		Call<AuthDellin> login = syncService.getRemoteData().login(sessionDTO);
 		
 		Response<AuthDellin> response = login.execute();
 		
