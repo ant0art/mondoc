@@ -21,23 +21,11 @@ import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.EncodingUtil;
 import com.dellin.mondoc.utils.OrderUtil;
 import com.dellin.mondoc.utils.PaginationUtil;
-import java.io.IOException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.OkHttpClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -49,6 +37,9 @@ import org.springframework.ui.ModelMap;
 import retrofit2.Call;
 import retrofit2.Response;
 
+import java.util.*;
+import java.util.stream.*;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -59,15 +50,8 @@ public class OrderServiceImpl implements OrderService {
 	private final OrderRepository orderRepository;
 	private final CompanyRepository companyRepository;
 	private final DocumentRepository documentRepository;
-	
-	private Thread taskThread;
-
 	private final SyncService syncService;
-	
-	//@Value("${api.address}")
-	//private String baseUrlFid = "https://api.dellin.ru";
-	//
-	//private IInterfaceManualLoad iInterfaceManualLoad;
+	private Thread taskThread;
 	
 	@Override
 	@Transactional
@@ -143,9 +127,7 @@ public class OrderServiceImpl implements OrderService {
 				
 				OrderRequest build = requestBuilder.build();
 				
-				Call<OrderResponse> orders = syncService
-						.getRemoteData()
-						.update(build);
+				Call<OrderResponse> orders = syncService.getRemoteData().update(build);
 				
 				Date start = new Date();
 				log.info("Sending request to API");
@@ -287,21 +269,6 @@ public class OrderServiceImpl implements OrderService {
 		});
 	}
 	
-	//@Override
-	//public IInterfaceManualLoad getRemoteData() {
-	//
-	//	Gson gson = new GsonBuilder().setLenient().create();
-	//
-	//	if (iInterfaceManualLoad == null) {
-	//		Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrlFid)
-	//				.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-	//				.addConverterFactory(GsonConverterFactory.create(gson))
-	//				.client(getUnsafeOkHttpClient()).build();
-	//		iInterfaceManualLoad = retrofit.create(IInterfaceManualLoad.class);
-	//	}
-	//	return iInterfaceManualLoad;
-	//}
-	
 	@Override
 	public Order getOrder(String docId) {
 		return orderRepository.findByDocId(docId).orElseThrow(() -> new CustomException(
@@ -378,41 +345,5 @@ public class OrderServiceImpl implements OrderService {
 		
 		taskThread.interrupt();
 		log.warn("Update was manually stopped");
-	}
-	
-	private OkHttpClient getUnsafeOkHttpClient() {
-		try {
-			// Create a trust manager that does not validate certificate chains
-			final TrustManager[] trustAllCerts =
-					new TrustManager[]{new X509TrustManager() {
-						
-						public void checkClientTrusted(X509Certificate[] x509Certificates,
-								String s) throws CertificateException {
-						}
-						
-						public void checkServerTrusted(X509Certificate[] x509Certificates,
-								String s) throws CertificateException {
-						}
-						
-						public X509Certificate[] getAcceptedIssuers() {
-							return new X509Certificate[]{};
-						}
-					}};
-			
-			// Install the all-trusting trust manager
-			final SSLContext sslContext = SSLContext.getInstance("SSL");
-			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-			
-			OkHttpClient.Builder builder = new OkHttpClient.Builder();
-			
-			builder.readTimeout(240, TimeUnit.SECONDS)
-				   .connectTimeout(240, TimeUnit.SECONDS)
-				   .writeTimeout(240, TimeUnit.SECONDS)
-				   .hostnameVerifier((s, sslSession) -> true);
-			
-			return builder.build();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 }
