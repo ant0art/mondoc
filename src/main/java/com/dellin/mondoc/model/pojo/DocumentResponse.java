@@ -13,14 +13,14 @@ public class DocumentResponse {
 	Collection<Data> data;
 	
 	@lombok.Data
-	public class Metadata {
+	public static class Metadata {
 		
 		Integer status;
 		String generated_at;
 	}
 	
 	@lombok.Data
-	public class Data {
+	public static class Data {
 		
 		String uid;
 		String base64;
