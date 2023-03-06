@@ -105,7 +105,6 @@ public class OrderServiceImpl implements OrderService {
 		}
 	}
 	
-	@Override
 	public void extracted(Thread thread, OrderRequest orderRequest, User user,
 			int currentPage, int totalPages, OrderRequestBuilder requestBuilder,
 			Date programStart) {

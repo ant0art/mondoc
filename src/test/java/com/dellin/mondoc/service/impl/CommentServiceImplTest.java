@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -115,8 +116,8 @@ public class CommentServiceImplTest {
 		when(commentRepository.findById(anyLong())).thenReturn(Optional.of(comment));
 		when(orderService.getOrder(anyString())).thenReturn(order);
 		
-		when(commentRepository.save(any(Comment.class))).thenAnswer(
-				i -> i.getArguments()[0]);
+		lenient().when(commentRepository.save(any(Comment.class)))
+				.thenAnswer(i -> i.getArguments()[0]);
 		
 		commentService.addCommentToOrder("0x1", 1L);
 	}
