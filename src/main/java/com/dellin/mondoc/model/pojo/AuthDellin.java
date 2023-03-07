@@ -12,7 +12,7 @@ public class AuthDellin {
 	
 	@Getter
 	@Setter
-	public class Metadata {
+	public static class Metadata {
 		
 		private Integer status;
 		private String generated_at;
@@ -20,7 +20,7 @@ public class AuthDellin {
 	
 	@Getter
 	@Setter
-	public class Data {
+	public static class Data {
 		
 		private String state;
 		private String sessionID;

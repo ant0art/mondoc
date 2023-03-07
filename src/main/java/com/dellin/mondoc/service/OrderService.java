@@ -17,8 +17,6 @@ public interface OrderService {
 	
 	void createAndUpdateOrders(Collection<OrderResponse.Order> orders);
 	
-	IInterfaceManualLoad getRemoteData();
-	
 	Order getOrder(String docId);
 	
 	ModelMap getOrders(Integer page, Integer perPage, String sort, Sort.Direction order);

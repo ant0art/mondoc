@@ -9,7 +9,6 @@ import com.dellin.mondoc.model.repository.RoleRepository;
 import com.dellin.mondoc.model.repository.UserRepository;
 import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.PaginationUtil;
-import com.dellin.mondoc.utils.PropertiesUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -53,13 +52,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		User user = getUser(email);
-		if (user == null) {
-			log.error(String.format("User with email: %s not found in db", email));
-			throw new UsernameNotFoundException(
-					String.format("User with email: %s not found in db", email));
-		} else {
-			log.info(String.format("User with email: %s found in db", email));
-		}
+		log.info(String.format("User [EMAIL: %s] found in db", email));
+		
 		Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
 		user.getRoles()
 				.forEach(role -> authorities.add(
@@ -72,7 +66,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	public UserDTO create(UserDTO userDTO) {
 		if (!validator.isValid(userDTO.getEmail())) {
 			throw new CustomException(
-					String.format("Email: %s is not valid", userDTO.getEmail()),
+					String.format("Email: [%s] is not valid", userDTO.getEmail()),
 					HttpStatus.BAD_REQUEST);
 		}
 		//userDTO --> user
@@ -80,12 +74,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		final String roleName = "ROLE_USER";
 		Role role = roleRepository.findByRoleName(roleName).orElseThrow(
 				() -> new CustomException(
-						String.format("Role with name: %s not found", roleName),
+						String.format("Role [NAME: %s] not found", roleName),
 						HttpStatus.NOT_FOUND));
 		user.getRoles().add(role);
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		user.setStatus(EntityStatus.CREATED);
-		log.info("User with email: {} with role: {} created", user.getEmail(),
+		log.info("User [EMAIL: {}] with role: [{}] was created", user.getEmail(),
 				role.getRoleName());
 		
 		//user --> userDTO
@@ -105,19 +99,21 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 			if (userDTO.getEmail() != null && !userDTO.getEmail().isEmpty()) {
 				userRepository.findByEmail(userDTO.getEmail()).ifPresent(e -> {
 					throw new CustomException(
-							String.format("User with email: %s already exists",
+							String.format("User [EMAIL: %s] is already exist",
 									u.getEmail()), HttpStatus.BAD_REQUEST);
 				});
 			}
-			PropertiesUtil.copyPropertiesIgnoreNull(
-					mapper.convertValue(userDTO, User.class), u);
+			
+			u.setEmail(userDTO.getEmail());
+			u.setRoles(userDTO.getRoles());
+			u.setPassword(passwordEncoder.encode(userDTO.getPassword()));
 			updateStatus(u, EntityStatus.UPDATED);
-			log.info("Updating user with email: {}", email);
 			dto.set(mapper.convertValue(userRepository.save(u), UserDTO.class));
+			log.info("User [EMAIL: {}] was updated", email);
 		}, () -> {
 			throw new CustomException(
-					String.format("User with email: %s not found. Nothing to update",
-							email), HttpStatus.NOT_FOUND);
+					String.format("User [EMAIL: %s] not found. Nothing to update", email),
+					HttpStatus.NOT_FOUND);
 		});
 		return dto.get();
 	}
@@ -133,7 +129,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	@Override
 	public User getUser(String email) {
 		return userRepository.findByEmail(email).orElseThrow(() -> new CustomException(
-				String.format("User with email: %s not found", email),
+				String.format("User [EMAIL: %s] not found", email),
 				HttpStatus.NOT_FOUND));
 	}
 	

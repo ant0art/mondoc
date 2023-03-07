@@ -31,11 +31,25 @@ public class CompanyServiceImpl implements CompanyService {
 	@Override
 	public ResponseEntity<CompanyDTO> create(CompanyDTO companyDTO) {
 		
+		String inn = companyDTO.getInn();
+		if (inn == null || inn.isEmpty()) {
+			throw new CustomException("Company inn can`t be null or empty",
+					HttpStatus.BAD_REQUEST);
+		}
+		companyRepository.findByInn(companyDTO.getInn()).ifPresent(c -> {
+			throw new CustomException(
+					String.format("Company [INN: %s] is already exist", c.getInn()),
+					HttpStatus.BAD_REQUEST);
+		});
+		
+		//companyDTO --> company
 		Company company = mapper.convertValue(companyDTO, Company.class);
 		company.setStatus(EntityStatus.CREATED);
 		
+		//company --> companyDTO
 		CompanyDTO dto =
 				mapper.convertValue(companyRepository.save(company), CompanyDTO.class);
+		log.info("Company [INN: {}] was created", company.getInn());
 		
 		return ResponseEntity.status(HttpStatus.OK).body(dto);
 	}
@@ -60,6 +74,8 @@ public class CompanyServiceImpl implements CompanyService {
 		company.setUpdatedAt(LocalDateTime.now());
 		
 		companyRepository.save(company);
+		log.info("Company [NAME: {}, INN: {}] was added to user [EMAIL: {}]",
+				company.getName(), company.getInn(), user.getEmail());
 	}
 	
 	@Override
@@ -84,7 +100,6 @@ public class CompanyServiceImpl implements CompanyService {
 	
 	public Company getCompany(String inn) {
 		return companyRepository.findByInn(inn).orElseThrow(() -> new CustomException(
-				String.format("Company with ID: %s not found", inn),
-				HttpStatus.NOT_FOUND));
+				String.format("Company [INN: %s] not found", inn), HttpStatus.NOT_FOUND));
 	}
 }

@@ -43,13 +43,19 @@ public class CommentServiceImpl implements CommentService {
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
 		User user = userService.getUser(email);
 		
-		Comment comment = new Comment();
-		user.getComments().add(comment);
+		if (commentDTO.getText() == null || commentDTO.getText().isEmpty()) {
+			throw new CustomException("Comment text can`t be empty",
+					HttpStatus.BAD_REQUEST);
+		}
 		
-		comment.setUser(user);
+		//commentDTO --> comment
+		Comment comment = mapper.convertValue(commentDTO, Comment.class);
 		comment.setStatus(EntityStatus.CREATED);
-		comment.setText(commentDTO.getText());
 		
+		user.getComments().add(comment);
+		comment.setUser(user);
+		
+		//comment --> commentDTO
 		CommentDTO dto =
 				mapper.convertValue(commentRepository.save(comment), CommentDTO.class);
 		
@@ -62,9 +68,9 @@ public class CommentServiceImpl implements CommentService {
 		Order order = orderService.getOrder(docId);
 		
 		if (comment.getOrder() != null) {
-			throw new CustomException(
-					String.format("Comment [id: {%d}] already added to order [id: {%s}]",
-							id, comment.getOrder().getDocId()), HttpStatus.BAD_REQUEST);
+			throw new CustomException(String.format(
+					"Comment [ID: {%d}] is already added to order [ID: {%s}]", id,
+					comment.getOrder().getDocId()), HttpStatus.BAD_REQUEST);
 		}
 		
 		order.getComments().add(comment);
@@ -76,6 +82,8 @@ public class CommentServiceImpl implements CommentService {
 		comment.setUpdatedAt(LocalDateTime.now());
 		
 		commentRepository.save(comment);
+		log.info("Comment [ID: {}] was added to order [ID: {}]", comment.getId(),
+				order.getDocId());
 	}
 	
 	@Override
@@ -84,7 +92,8 @@ public class CommentServiceImpl implements CommentService {
 		Comment comment = getComment(commentDTO.getId());
 		String text = commentDTO.getText();
 		if (text == null || text.isEmpty()) {
-			throw new CustomException("Comment can`t be empty", HttpStatus.BAD_REQUEST);
+			throw new CustomException("Comment text can`t be empty",
+					HttpStatus.BAD_REQUEST);
 		}
 		comment.setText(text);
 		
@@ -101,8 +110,8 @@ public class CommentServiceImpl implements CommentService {
 	}
 	
 	public Comment getComment(Long id) {
-		return commentRepository.findById(id).orElseThrow(() -> new CustomException(
-				String.format("Comment with ID: %d not found", id),
-				HttpStatus.NOT_FOUND));
+		return commentRepository.findById(id).orElseThrow(
+				() -> new CustomException(String.format("Comment [ID: %d] not found", id),
+						HttpStatus.NOT_FOUND));
 	}
 }

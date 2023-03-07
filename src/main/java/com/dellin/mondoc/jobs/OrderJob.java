@@ -11,7 +11,7 @@ import com.dellin.mondoc.model.pojo.OrderRequestBuilder;
 import com.dellin.mondoc.model.pojo.OrderResponse;
 import com.dellin.mondoc.service.DocumentService;
 import com.dellin.mondoc.service.OrderService;
-import com.dellin.mondoc.service.SessionService;
+import com.dellin.mondoc.service.impl.SyncService;
 import com.dellin.mondoc.utils.OrderUtil;
 import java.io.*;
 import java.time.LocalDate;
@@ -33,12 +33,9 @@ import java.util.concurrent.*;
 public class OrderJob {
 	
 	private static final String DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-	private final SessionService sessionService;
-	
-	//	private final DocumentRepository documentRepository;
-	
 	private final DocumentService documentService;
 	private final OrderService orderService;
+	private final SyncService syncService;
 	
 	private final String APPKEY = System.getenv("appkey");
 	private final String LOGIN = System.getenv("loginDl");
@@ -46,31 +43,16 @@ public class OrderJob {
 	
 	@Scheduled(cron = "0 0 21 ? * *")
 	//	@Scheduled(fixedDelay = 1000000L, initialDelay = 0)
-	public void getOrders() throws IOException, InterruptedException {
+	public void getOrders() throws IOException {
 		
-		log.info("Scheduled method [getOrders] started to work");
+		log.info("Scheduled method [getOrders()] started to work");
 		
 		Date programStart = new Date();
 		
 		/* STEP ONE
 		Get sessionID */
 		
-		SessionDTO sessionDTO = new SessionDTO();
-		sessionDTO.setAppkey(APPKEY);
-		sessionDTO.setLogin(LOGIN);
-		sessionDTO.setPassword(PASS);
-		Call<AuthDellin> login = sessionService.getRemoteData().login(sessionDTO);
-		
-		Response<AuthDellin> response = login.execute();
-		
-		if (!response.isSuccessful()) {
-			throw new IOException(
-					response.errorBody() != null ? response.errorBody().string()
-							: "Unknown error");
-		}
-		
-		assert response.body() != null;
-		String sessionID = response.body().getData().getSessionID();
+		String sessionID = getSessionID();
 		
 		/* STEP TWO
 		
@@ -98,39 +80,40 @@ public class OrderJob {
 			public void run() {
 				
 				if (currentPage <= totalPages) {
-					log.info("Starting cycle of updating orders at {} page", currentPage);
+					log.info("Starting cycle of updating orders at [{}] page",
+							currentPage);
 					requestBuilder.setPage(currentPage);
 					
 					Date start = new Date();
 					log.info("Sending request to API");
 					
 					Call<OrderResponse> orders =
-							orderService.getRemoteData().update(requestBuilder.build());
-					Response<OrderResponse> orderResponse = null;
+							syncService.getRemoteData().update(requestBuilder.build());
 					try {
-						orderResponse = orders.execute();
-						log.info("Got the response in {} ms",
+						Response<OrderResponse> orderResponse = orders.execute();
+						log.info("Got the response in [{}] sec",
 								(new Date().getTime() - start.getTime()) / 1000.);
+			
+					/* STEP THREE
+					Get orders and put every new to DB or else update them */
+						
+						assert orderResponse.body() != null;
+						Collection<OrderResponse.Order> ord =
+								orderResponse.body().getOrders();
+						
+						orderService.createAndUpdateOrders(ord);
+						totalPages = orderResponse.body().getMetadata().getTotalPages();
 					} catch (IOException e) {
 						log.error(e.getMessage());
 					}
-					
-			
-			/* STEP THREE
-			Get orders and put every new to DB or else update them */
-					
-					Collection<OrderResponse.Order> ord =
-							orderResponse.body().getOrders();
-					
-					orderService.createAndUpdateOrders(ord);
-					totalPages = orderResponse.body().getMetadata().getTotalPages();
 					log.info("End of page: [{}]. Total pages: [{}]", currentPage,
 							totalPages);
 					currentPage++;
 				} else {
 					Date programEnd = new Date();
 					long ms = programEnd.getTime() - programStart.getTime();
-					log.info("Method finished after {} seconds of working", (ms / 1000L));
+					log.info("Method [getOrders()] finished after [{}] sec of working",
+							(ms / 1000L));
 					executorService.shutdown();
 				}
 			}
@@ -142,27 +125,13 @@ public class OrderJob {
 	//	@Scheduled(fixedDelay = 1000000L, initialDelay = 0)
 	public void getAvailableDocs() throws IOException {
 		
+		log.info("Method [getAvailableDocs()] started to work");
 		Date programStart = new Date();
 		
 		/* STEP ONE
 		Get sessionID */
 		
-		SessionDTO sessionDTO = new SessionDTO();
-		sessionDTO.setAppkey(APPKEY);
-		sessionDTO.setLogin(LOGIN);
-		sessionDTO.setPassword(PASS);
-		Call<AuthDellin> login = sessionService.getRemoteData().login(sessionDTO);
-		
-		Response<AuthDellin> response = login.execute();
-		
-		if (!response.isSuccessful()) {
-			throw new IOException(
-					response.errorBody() != null ? response.errorBody().string()
-							: "Unknown error");
-		}
-		
-		assert response.body() != null;
-		String sessionID = response.body().getData().getSessionID();
+		String sessionID = getSessionID();
 		
 		/* STEP TWO
 		
@@ -180,15 +149,11 @@ public class OrderJob {
 			
 			@Override
 			public void run() {
-				log.info("Starting cycle of updating documents at {} element of {}",
-						count + 1, byBase64Null.size());
-				
 				Document document = byBase64Null.get(count);
 				
 				if (count <= byBase64Null.size()) {
 					try {
-						log.info(
-								"Starting cycle of updating documents at {} element of {}",
+						log.info("Starting cycle of updating documents at [{}] of [{}]",
 								count + 1, byBase64Null.size());
 						
 						log.info("Current document to update: [ID: {}, TYPE:{}, UID: "
@@ -209,12 +174,12 @@ public class OrderJob {
 						Date start = new Date();
 						log.info("Sending request to API");
 						Call<DocumentResponse> availableDoc =
-								orderService.getRemoteData().getPrintableDoc(build);
+								syncService.getRemoteData().getPrintableDoc(build);
 						
 						try {
 							Response<DocumentResponse> docResponse =
 									availableDoc.execute();
-							log.info("Got the response in {} ms",
+							log.info("Got the response in [{}] sec",
 									(new Date().getTime() - start.getTime()) / 1000.);
 							
 							if (!docResponse.isSuccessful()) {
@@ -223,7 +188,7 @@ public class OrderJob {
 										? docResponse.errorBody().string()
 										: "Unknown error");
 							} else {
-								
+								assert docResponse.body() != null;
 								Collection<DocumentResponse.Data> data =
 										docResponse.body().getData();
 								documentService.updateDocData(document, data);
@@ -233,9 +198,8 @@ public class OrderJob {
 						}
 						
 						count++;
-						log.info(
-								"Scheduled method \"getAvailableDocs()\" ended process on "
-										+ "doc {} of {}", count, byBase64Null.size());
+						log.info("Scheduled method [getAvailableDocs()] ended process on "
+								+ "doc {} of {}", count, byBase64Null.size());
 					} catch (IOException e) {
 						log.error(e.getMessage());
 					}
@@ -243,11 +207,31 @@ public class OrderJob {
 					
 					Date programEnd = new Date();
 					long ms = programEnd.getTime() - programStart.getTime();
-					log.info("Method finished after {} seconds of working", (ms / 1000L));
+					log.info("Method [getAvailableDocs()] finished after [{}] sec of "
+							+ "working", (ms / 1000L));
 					executorService.shutdown();
 				}
 			}
 		};
 		executorService.scheduleAtFixedRate(task, 0, 10, TimeUnit.SECONDS);
+	}
+	
+	private String getSessionID() throws IOException {
+		SessionDTO sessionDTO = new SessionDTO();
+		sessionDTO.setAppkey(APPKEY);
+		sessionDTO.setLogin(LOGIN);
+		sessionDTO.setPassword(PASS);
+		Call<AuthDellin> login = syncService.getRemoteData().login(sessionDTO);
+		
+		Response<AuthDellin> response = login.execute();
+		
+		if (!response.isSuccessful()) {
+			throw new IOException(
+					response.errorBody() != null ? response.errorBody().string()
+							: "Unknown error");
+		}
+		
+		assert response.body() != null;
+		return response.body().getData().getSessionID();
 	}
 }
