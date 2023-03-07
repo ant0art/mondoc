@@ -100,6 +100,6 @@ public class CompanyServiceImpl implements CompanyService {
 	
 	public Company getCompany(String inn) {
 		return companyRepository.findByInn(inn).orElseThrow(() -> new CustomException(
-				String.format("Company [ID: %s] not found", inn), HttpStatus.NOT_FOUND));
+				String.format("Company [INN: %s] not found", inn), HttpStatus.NOT_FOUND));
 	}
 }

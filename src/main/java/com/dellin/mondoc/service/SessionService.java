@@ -9,6 +9,4 @@ public interface SessionService {
 	AuthDellin getLoginResponse(SessionDTO sessionDTO) throws IOException;
 	
 	AuthDellin getLogoutResponse() throws IOException;
-	
-	IInterfaceManualLoad getRemoteData();
 }

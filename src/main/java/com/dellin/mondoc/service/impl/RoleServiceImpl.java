@@ -12,7 +12,6 @@ import com.dellin.mondoc.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -88,10 +87,5 @@ public class RoleServiceImpl implements RoleService {
 				() -> new CustomException(
 						String.format("Role [NAME: %s] not found", roleName),
 						HttpStatus.NOT_FOUND));
-	}
-	
-	private void updateStatus(Role role, EntityStatus status) {
-		role.setStatus(status);
-		role.setUpdatedAt(LocalDateTime.now());
 	}
 }

@@ -15,7 +15,7 @@ public class OrderResponse {
 	Collection<String> deleted;
 	
 	@Data
-	public class Metadata {
+	public static class Metadata {
 		
 		Integer status;
 		Integer currentPage;
@@ -26,7 +26,7 @@ public class OrderResponse {
 	}
 	
 	@Data
-	public class Order {
+	public static class Order {
 		
 		String orderNumber;
 		String orderDate;
@@ -75,7 +75,7 @@ public class OrderResponse {
 		String shipmentLabelCargoPlace;
 		
 		@Data
-		public class DerivalArrival {
+		public static class DerivalArrival {
 			
 			String city;
 			Integer cityId;
@@ -94,7 +94,7 @@ public class OrderResponse {
 			SpecialWorktable specialWorktable;
 			
 			@Data
-			class TerminalWorktables {
+			static class TerminalWorktables {
 				
 				String sun;
 				String mon;
@@ -106,7 +106,7 @@ public class OrderResponse {
 			}
 			
 			@Data
-			class SpecialWorktable {
+			static class SpecialWorktable {
 				
 				Collection<String> receive;
 				Collection<String> giveout;
@@ -114,7 +114,7 @@ public class OrderResponse {
 		}
 		
 		@Data
-		public class Member {
+		public static class Member {
 			
 			//	String opf;
 			//	Opf opf;
@@ -143,7 +143,7 @@ public class OrderResponse {
 		}
 		
 		@Data
-		public class Freight {
+		public static class Freight {
 			
 			String name;
 			String weight;
@@ -158,14 +158,14 @@ public class OrderResponse {
 		}
 		
 		@Data
-		public class CargoPlace {
+		public static class CargoPlace {
 			
 			String number;
 			Integer amount;
 		}
 		
 		@Data
-		public class Air {
+		public static class Air {
 			
 			String arrivalDate;
 			String giveoutDate;
@@ -176,7 +176,7 @@ public class OrderResponse {
 		}
 		
 		@Data
-		public class Lock {
+		public static class Lock {
 			
 			String name;
 			String type;
@@ -185,7 +185,7 @@ public class OrderResponse {
 		}
 		
 		@Data
-		public class OrderDates {
+		public static class OrderDates {
 			
 			String arrivalToOspReceiver;
 			String arrivalToOspReceiverMax;
@@ -208,14 +208,14 @@ public class OrderResponse {
 		}
 		
 		@Data
-		public class OrderTimeInDays {
+		public static class OrderTimeInDays {
 			
 			Integer delivery;
 			Integer deliveryAccdoc;
 		}
 		
 		@Data
-		public class Sfrequest {
+		public static class Sfrequest {
 			
 			Integer cityID;
 			String docNumber;
@@ -223,7 +223,7 @@ public class OrderResponse {
 		}
 		
 		@Data
-		public class Document {
+		public static class Document {
 			
 			String id;
 			String uid;
@@ -251,21 +251,21 @@ public class OrderResponse {
 			Collection<String> availableDocs;
 			
 			@Data
-			class Derival {
+			static class Derival {
 				
 				String name;
 				String code;
 			}
 			
 			@Data
-			class Arrival {
+			static class Arrival {
 				
 				String name;
 				String code;
 			}
 			
 			@Data
-			class Service {
+			static class Service {
 				
 				String name;
 				String serviceUid;
@@ -279,7 +279,7 @@ public class OrderResponse {
 			}
 			
 			@Data
-			class AcDoc {
+			static class AcDoc {
 				
 				String documentDate;
 				String documentNumber;
@@ -288,12 +288,12 @@ public class OrderResponse {
 		}
 		
 		@Data
-		public class OrderDatesAdditional {
+		public static class OrderDatesAdditional {
 			
 			Collection<Tracing> tracing;
 			
 			@Data
-			class Tracing {
+			static class Tracing {
 				
 				String title;
 				String date;
@@ -304,7 +304,7 @@ public class OrderResponse {
 		}
 		
 		@Data
-		public class AcceptanceAct {
+		public static class AcceptanceAct {
 			
 			String acceptanceActNumber;
 			String acceptanceActDate;
