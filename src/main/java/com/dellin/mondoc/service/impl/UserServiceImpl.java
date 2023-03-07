@@ -9,7 +9,6 @@ import com.dellin.mondoc.model.repository.RoleRepository;
 import com.dellin.mondoc.model.repository.UserRepository;
 import com.dellin.mondoc.service.UserService;
 import com.dellin.mondoc.utils.PaginationUtil;
-import com.dellin.mondoc.utils.PropertiesUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -53,10 +52,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		User user = getUser(email);
-		if (user == null) {
-			throw new UsernameNotFoundException(
-					String.format("User [EMAIL: %s] not found", email));
-		}
 		log.info(String.format("User [EMAIL: %s] found in db", email));
 		
 		Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
@@ -108,8 +103,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 									u.getEmail()), HttpStatus.BAD_REQUEST);
 				});
 			}
-			PropertiesUtil.copyPropertiesIgnoreNull(
-					mapper.convertValue(userDTO, User.class), u);
+			
+			u.setEmail(userDTO.getEmail());
+			u.setRoles(userDTO.getRoles());
+			u.setPassword(passwordEncoder.encode(userDTO.getPassword()));
 			updateStatus(u, EntityStatus.UPDATED);
 			dto.set(mapper.convertValue(userRepository.save(u), UserDTO.class));
 			log.info("User [EMAIL: {}] was updated", email);
