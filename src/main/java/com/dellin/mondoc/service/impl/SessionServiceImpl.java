@@ -17,6 +17,7 @@ import java.io.*;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,22 +38,20 @@ public class SessionServiceImpl implements SessionService {
 	 * Repository which contains users
 	 */
 	private final UserRepository userRepository;
-	
-	/**
-	 * The field APPKEY set up by environment var
-	 */
-	private final String APPKEY = System.getenv("appkey");
-	
 	/**
 	 * ObjectMapper for reading and writing JSON
 	 */
 	private final ObjectMapper mapper =
 			JsonMapper.builder().addModule(new JavaTimeModule()).build();
-	
 	/**
 	 * Injection of Retrofit service requests
 	 */
 	private final SyncService syncService;
+	/**
+	 * The field APPKEY set up by environment var
+	 */
+	@Value("${api.appkey}")
+	String APPKEY = "";
 	
 	/**
 	 * Method that login User in API Dellin

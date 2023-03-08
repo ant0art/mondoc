@@ -139,6 +139,21 @@
 					<release>11</release>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<environmentVariables>
+						<JASYPT_ENCRYPTOR_PASSWORD>secret</JASYPT_ENCRYPTOR_PASSWORD>
+						<DATASOURCE_URL>localhost:5432/mondoc</DATASOURCE_URL>
+						<DATASOURCE_USERNAME>postgres</DATASOURCE_USERNAME>
+						<DATASOURCE_PASSWORD>postgres</DATASOURCE_PASSWORD>
+						<appkey>appkey</appkey>
+						<loginDL>login</loginDL>
+						<passDL>pass</passDL>
+					</environmentVariables>
+				</configuration>
+			</plugin>
 		</plugins>
 		<finalName>mondoc</finalName>
 	</build>

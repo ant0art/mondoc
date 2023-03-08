@@ -12,10 +12,12 @@ spring:
                     lob:
                         non_contextual_creation: true
     datasource:
-        url: jdbc:postgresql://localhost:5432/mondoc
-        username: postgres
-        password: postgres
+        url: jdbc:postgresql://${DATASOURCE_URL}
+        username: ${DATASOURCE_USERNAME}
+        password: ${DATASOURCE_PASSWORD}
         driver-class-name: org.postgresql.Driver
 api:
     address: https://api.dellin.ru
-
+    appkey: ${appkey}
+    login: ${loginDL}
+    password: ${passDL}

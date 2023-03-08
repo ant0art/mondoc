@@ -11,11 +11,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.ui.ModelMap;
 
@@ -37,6 +39,8 @@ public class UserServiceImplTest {
 	private RoleRepository roleRepository;
 	@Mock
 	private UserRepository userRepository;
+	@Spy
+	private PasswordEncoder passwordEncoder;
 	
 	@Test
 	public void loadUserByUsername() {

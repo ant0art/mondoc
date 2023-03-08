@@ -17,6 +17,7 @@ import java.io.*;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -37,9 +38,12 @@ public class OrderJob {
 	private final OrderService orderService;
 	private final SyncService syncService;
 	
-	private final String APPKEY = System.getenv("appkey");
-	private final String LOGIN = System.getenv("loginDl");
-	private final String PASS = System.getenv("passDl");
+	@Value("${api.appkey}")
+	String APPKEY = "";
+	@Value("${api.login}")
+	String LOGIN = "";
+	@Value("${api.password}")
+	String PASS = "";
 	
 	@Scheduled(cron = "0 0 21 ? * *")
 	//	@Scheduled(fixedDelay = 1000000L, initialDelay = 0)
