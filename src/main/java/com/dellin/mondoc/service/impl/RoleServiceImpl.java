@@ -18,21 +18,48 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Service class to work with Roles
+ *
+ * @see Role
+ * @see RoleRepository
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class RoleServiceImpl implements RoleService {
 	
+	/**
+	 * Repository which contains users
+	 */
 	private final UserRepository userRepository;
 	
+	/**
+	 * Repository which contains roles
+	 */
 	private final RoleRepository roleRepository;
 	
+	/**
+	 * User service class
+	 */
 	private final UserService userService;
 	
+	/**
+	 * ObjectMapper for reading and writing JSON
+	 */
 	private final ObjectMapper mapper =
 			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
+	/**
+	 * Method that creates a new {@link Role} entity and write it to database
+	 * <p>
+	 * Returns a RoleDTO object if well-created
+	 *
+	 * @param roleDTO the {@link RoleDTO} object to add
+	 *
+	 * @return thr {@link RoleDTO} object
+	 */
 	@Override
 	public RoleDTO create(RoleDTO roleDTO) {
 		String roleName = roleDTO.getRoleName();
@@ -55,12 +82,29 @@ public class RoleServiceImpl implements RoleService {
 		return mapper.convertValue(roleRepository.save(role), RoleDTO.class);
 	}
 	
+	/**
+	 * Method that find a {@link Role} in the database by role name
+	 * <p>
+	 * Returns the RoleDTO object if found or else the {@link CustomException} with http
+	 * <b>404</b> status
+	 *
+	 * @param roleName the name of role
+	 *
+	 * @return the {@link RoleDTO} object
+	 */
 	@Override
 	public RoleDTO get(String roleName) {
-		Role role = getRole(roleName);
-		return mapper.convertValue(role, RoleDTO.class);
+		return mapper.convertValue(getRole(roleName), RoleDTO.class);
 	}
 	
+	/**
+	 * Method provides to add a role to the user
+	 * <p>
+	 * Method parameters must belong to previously created objects.
+	 *
+	 * @param email    the value of {@link User} required field
+	 * @param roleName the value of {@link Role} required field
+	 */
 	@Override
 	public void addRoleToUser(String email, String roleName) {
 		log.info("Adding to user [EMAIL: {}] a role [{}]", email, roleName);
@@ -82,6 +126,16 @@ public class RoleServiceImpl implements RoleService {
 				user.getEmail());
 	}
 	
+	/**
+	 * Method that find a {@link Role} in the database by role name
+	 * <p>
+	 * Returns the Role object if found or else the {@link CustomException} with http
+	 * <b>404</b> status
+	 *
+	 * @param roleName the name of role
+	 *
+	 * @return the {@link Role} object
+	 */
 	public Role getRole(String roleName) {
 		return roleRepository.findByRoleName(roleName).orElseThrow(
 				() -> new CustomException(

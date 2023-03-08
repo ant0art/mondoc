@@ -37,6 +37,9 @@ import javax.validation.constraints.NotEmpty;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 
+/**
+ * Authentication controller
+ */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -45,10 +48,24 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 				name = "Authorization")
 public class AuthController {
 	
+	/**
+	 * User service class
+	 */
 	private final UserService userService;
 	
+	/**
+	 * Injection of manager provides the processes an {@link Authentication} request.
+	 */
 	private final AuthenticationManager manager;
 	
+	/**
+	 * Method that send the current error appeared while authentication in process
+	 *
+	 * @param response the {@link HttpServletResponse} response
+	 * @param e        the Exception value
+	 *
+	 * @throws IOException if an input or output exception occurred
+	 */
 	public static void sendAuthError(HttpServletResponse response, Exception e) throws
 			IOException {
 		response.setHeader("error", e.getMessage());
@@ -59,6 +76,15 @@ public class AuthController {
 		new ObjectMapper().writeValue(response.getOutputStream(), error);
 	}
 	
+	/**
+	 * Method that gives the token pair: access and refresh to authenticated user
+	 *
+	 * @param request  the {@link HttpServletRequest} request
+	 * @param response the {@link HttpServletResponse} response
+	 * @param user     User information retrieved by a UserDetailsService.
+	 *
+	 * @throws IOException if an input or output exception occurred
+	 */
 	public static void getTokensJson(HttpServletRequest request,
 			HttpServletResponse response,
 			org.springframework.security.core.userdetails.User user) throws IOException {
@@ -86,6 +112,14 @@ public class AuthController {
 		new ObjectMapper().writeValue(response.getOutputStream(), tokens);
 	}
 	
+	/**
+	 * Method that gives the new token pair: access and refresh to authenticated user
+	 *
+	 * @param request  the {@link HttpServletRequest} request
+	 * @param response the {@link HttpServletResponse} response
+	 *
+	 * @throws IOException if an input or output exception occurred
+	 */
 	@GetMapping("/token/refresh")
 	@Operation(summary = "Refresh token",
 			   security = @SecurityRequirement(name = AUTHORIZATION))
@@ -123,6 +157,19 @@ public class AuthController {
 		}
 	}
 	
+	/**
+	 * Method that provides user authentication
+	 *
+	 * @param form           the {@link AuthenticationForm} form
+	 * @param request        the {@link HttpServletRequest} request
+	 * @param response       the {@link HttpServletResponse} response
+	 * @param authentication Represents the token for an authentication request or for an
+	 *                       authenticated principal once the request has been processed
+	 *                       by the AuthenticationManager.authenticate(Authentication)
+	 *                       method.
+	 *
+	 * @throws IOException if an input or output exception occurred
+	 */
 	@PostMapping(value = "/login", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@Operation(summary = "User authentication")
 	public void login(@RequestBody AuthenticationForm form, HttpServletRequest request,
@@ -141,12 +188,21 @@ public class AuthController {
 	}
 }
 
+/**
+ * A class-form of user Authentication
+ */
 @Data
 class AuthenticationForm {
 	
+	/**
+	 * Required user credential field
+	 */
 	@NotEmpty(message = "Email should not be empty")
 	@Email
 	private String username;
+	/**
+	 * Required user credential field
+	 */
 	@NotEmpty(message = "Password should not be empty")
 	private String password;
 }
