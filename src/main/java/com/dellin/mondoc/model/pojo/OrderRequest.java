@@ -17,18 +17,9 @@ public class OrderRequest {
 	@NotEmpty(message = "AppKey should not be empty") String appKey;
 	@NotEmpty(message = "SessionID should not be empty") String sessionID;
 	Collection<String> docIds;
-	//	String orderNumber;
-	//	String orderDate;
-	//	String barcode;
-	//	Collection<String> cargoPlaces;
-	//	String shipmentLabelCargoPlace;
 	String dateStart;
 	String dateEnd;
-	//	String states;
 	Integer page;
-	//	String lastUpdate;
-	//	String orderBy;
-	//	Boolean orderDatesAdditional;
 	
 	public OrderRequest(OrderRequestBuilder orderRequestBuilder) {
 		this.appKey = orderRequestBuilder.appKey;

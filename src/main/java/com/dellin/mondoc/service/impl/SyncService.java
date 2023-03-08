@@ -21,16 +21,32 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+/**
+ * The Retrofit service class
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SyncService {
 	
+	/**
+	 * Base url of API Dellin
+	 */
 	@Value("${api.address}")
 	String baseUrlFid = "";
 	
+	/**
+	 * Injection of Retrofit interface of API Dellin requests
+	 */
 	private IInterfaceManualLoad iInterfaceManualLoad;
 	
+	/**
+	 * Method that initialize the Retrofit interface with base url of API Dellin
+	 * <p>
+	 * Returns the Retrofit interface with basic url and GsonConverter
+	 *
+	 * @return the {@link IInterfaceManualLoad} Retrofit interface
+	 */
 	public IInterfaceManualLoad getRemoteData() {
 		
 		Gson gson = new GsonBuilder().setLenient().create();
@@ -45,6 +61,11 @@ public class SyncService {
 		return iInterfaceManualLoad;
 	}
 	
+	/**
+	 * Method that builds the OkHttpClient
+	 *
+	 * @return the {@link OkHttpClient} object
+	 */
 	private OkHttpClient getUnsafeOkHttpClient() {
 		try {
 			// Create a trust manager that does not validate certificate chains

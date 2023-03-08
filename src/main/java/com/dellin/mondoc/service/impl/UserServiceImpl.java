@@ -23,7 +23,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,24 +32,49 @@ import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.stream.*;
 
+/**
+ * Service class to work with Users
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class UserServiceImpl implements UserService, UserDetailsService {
 	
+	/**
+	 * Repository which contains roles
+	 */
 	private final RoleRepository roleRepository;
 	
+	/**
+	 * Repository which contains users
+	 */
 	private final UserRepository userRepository;
 	
+	/**
+	 * ObjectMapper for reading and writing JSON
+	 */
 	private final ObjectMapper mapper =
 			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
+	/**
+	 * Injected service interface for encoding passwords
+	 */
 	private final PasswordEncoder passwordEncoder;
+	/**
+	 * The field of injected email validator
+	 */
 	private final EmailValidator validator = EmailValidator.getInstance();
 	
+	/**
+	 * Locates the user based on the email
+	 *
+	 * @param email the username identifying the user whose data is required.
+	 *
+	 * @return a fully populated user record (never null)
+	 */
 	@Override
-	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+	public UserDetails loadUserByUsername(String email) {
 		User user = getUser(email);
 		log.info(String.format("User [EMAIL: %s] found in db", email));
 		
@@ -62,6 +86,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 				user.getPassword(), authorities);
 	}
 	
+	/**
+	 * Method that creates a new {@link User} entity and write it to database
+	 * <p>
+	 * Returns a UserDTO object if well-created
+	 *
+	 * @param userDTO the {@link UserDTO} object to add
+	 *
+	 * @return the {@link UserDTO} object
+	 */
 	@Override
 	public UserDTO create(UserDTO userDTO) {
 		if (!validator.isValid(userDTO.getEmail())) {
@@ -86,11 +119,31 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return mapper.convertValue(userRepository.save(user), UserDTO.class);
 	}
 	
+	/**
+	 * Method that find a {@link Role} in the database by role name
+	 * <p>
+	 * Returns the RoleDTO object if found or else the {@link CustomException} with http
+	 * <b>404</b> status
+	 *
+	 * @param email the email of user
+	 *
+	 * @return the {@link UserDTO} object
+	 */
 	@Override
 	public UserDTO get(String email) {
 		return mapper.convertValue(getUser(email), UserDTO.class);
 	}
 	
+	/**
+	 * Method that update current {@link User} entity found in database
+	 * <p>
+	 * Returns a {@link UserDTO} object after updating fields of its entity
+	 *
+	 * @param email   the email of User
+	 * @param userDTO the {@link UserDTO} object to update
+	 *
+	 * @return the updated {@link UserDTO} object
+	 */
 	@Override
 	public UserDTO update(String email, UserDTO userDTO) {
 		
@@ -118,6 +171,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return dto.get();
 	}
 	
+	/**
+	 * Method that delete User by its email
+	 * <p>
+	 * Method changes status of entity to {@link EntityStatus#DELETED} instead of totally
+	 * removing it from database
+	 *
+	 * @param email the email of User
+	 */
 	@Override
 	public void delete(String email) {
 		User user = getUser(email);
@@ -126,6 +187,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		userRepository.save(user);
 	}
 	
+	/**
+	 * Method that find a {@link User} in the database by email
+	 * <p>
+	 * Returns the Company object if found or else a {@link CustomException} with http
+	 * <b>404</b> status
+	 *
+	 * @param email the email of User
+	 *
+	 * @return the {@link User} object
+	 */
 	@Override
 	public User getUser(String email) {
 		return userRepository.findByEmail(email).orElseThrow(() -> new CustomException(
@@ -133,6 +204,23 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 				HttpStatus.NOT_FOUND));
 	}
 	
+	/**
+	 * Method that gets all available Users
+	 * <p>
+	 * Returns a model map of all objects users in a limited size list sorted by chosen
+	 * parameter.
+	 *
+	 * @param page    the serial number of page
+	 * @param perPage the number of elements on page
+	 * @param sort    the main parameter of sorting
+	 * @param order   ASC or DESC
+	 *
+	 * @return the ModelMap of sorted {@link User}
+	 *
+	 * @see ModelMap
+	 * @see Pageable
+	 * @see Page
+	 */
 	@Override
 	public ModelMap getUsers(Integer page, Integer perPage, String sort,
 			Sort.Direction order) {
@@ -158,6 +246,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return map;
 	}
 	
+	/**
+	 * Change the state of {@link User}-entity by chosen and set up the entity field
+	 * updatedAt new local date time
+	 *
+	 * @param user   the {@link User} object
+	 * @param status the {@link EntityStatus} enum
+	 */
 	@Override
 	public void updateStatus(User user, EntityStatus status) {
 		user.setStatus(status);

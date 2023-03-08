@@ -1,5 +1,6 @@
 package com.dellin.mondoc.service.impl;
 
+import com.dellin.mondoc.model.dto.SessionDTO;
 import com.dellin.mondoc.model.entity.Company;
 import com.dellin.mondoc.model.entity.Document;
 import com.dellin.mondoc.model.entity.Order;
@@ -9,6 +10,7 @@ import com.dellin.mondoc.model.enums.OrderDocType;
 import com.dellin.mondoc.model.pojo.DocumentRequest;
 import com.dellin.mondoc.model.pojo.DocumentRequestBuilder;
 import com.dellin.mondoc.model.pojo.DocumentResponse;
+import com.dellin.mondoc.model.pojo.OrderRequest;
 import com.dellin.mondoc.model.repository.DocumentRepository;
 import com.dellin.mondoc.service.DocumentService;
 import com.dellin.mondoc.service.UserService;
@@ -16,6 +18,7 @@ import com.dellin.mondoc.utils.EncodingUtil;
 import java.io.*;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -25,21 +28,74 @@ import retrofit2.Response;
 import java.util.*;
 import java.util.stream.*;
 
+/**
+ * Service class to work with Documents
+ *
+ * @see Document
+ * @see DocumentRepository
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class DocumentServiceImpl implements DocumentService {
 	
+	/**
+	 * User service class
+	 */
 	private final UserService userService;
 	
+	/**
+	 * Repository which contains documents
+	 */
 	private final DocumentRepository documentRepository;
 	
+	/**
+	 * Injection of Retrofit service requests
+	 */
 	private final SyncService syncService;
 	
+	/**
+	 * Service thread is used for updating documents
+	 */
+	@Setter
 	private Thread taskThread;
 	
+	/**
+	 * Switcher of thread state
+	 */
+	@Setter
 	private boolean initializedThread = false;
 	
+	/**
+	 * Method that updates document database by connecting to Dellin API
+	 * <p>
+	 * The method connects to the Dellin API by sending a request that contains the
+	 * following required parameters: pre-decrypted appkey, pre-decrypted sessionID, mode,
+	 * docUID.
+	 * <pre>
+	 *  <b>appkey</b> - the encrypted API key
+	 *  <b>sessionID</b> - the encrypted unique session value previously received by the
+	 *  user after authorization in the API through the method
+	 *  {@link SessionServiceImpl#getLoginResponse(SessionDTO)}
+	 *  <b>mode</b> - one of the possible document types {@link OrderDocType}
+	 *  <b>docUID</b> - the value docUID of {@link Document} that was received earlier by
+	 *  another method {@link OrderServiceImpl#update(OrderRequest)}</pre>
+	 * <p>
+	 * Using multithreading, the method checks all available documents that require
+	 * updating. The timeout between requests set up as the recommended Dellin interval of
+	 * 10 seconds. That`s why method checks the time of receipt of the response and send
+	 * the request for the next document after the remaining time.
+	 * <p>
+	 * One necessary check concerns the document type, since only GIVEOUT have a direct
+	 * link.
+	 * <p>
+	 * Updating data is possible only for authorized users, since any change is recorded
+	 * in the history.
+	 *
+	 * @see #extracted(Thread, int, List, User)
+	 * @see #updateDocData(Document, Collection)
+	 * @see #stopUpdate()
+	 */
 	@Override
 	public void update() {
 		Date programStart = new Date();
@@ -74,6 +130,13 @@ public class DocumentServiceImpl implements DocumentService {
 		}
 	}
 	
+	/**
+	 * Method that interrupt process of updating document database
+	 * <p>
+	 * Method interrupts earlier started thread of updating documents
+	 *
+	 * @see DocumentServiceImpl#update()
+	 */
 	@Override
 	public void stopUpdate() {
 		
@@ -84,6 +147,19 @@ public class DocumentServiceImpl implements DocumentService {
 		}
 	}
 	
+	/**
+	 * Method that update current Document by API data values
+	 * <p>
+	 * Method iterates each document of received Response in order to fill in empty
+	 * Document fields and save them to database
+	 *
+	 * @param document the {@link Document} object to update
+	 * @param data     the collection of {@link DocumentResponse.Data}
+	 *
+	 * @see #update()
+	 * @see #extracted(Thread, int, List, User)
+	 * @see #stopUpdate()
+	 */
 	@Override
 	public void updateDocData(Document document, Collection<DocumentResponse.Data> data) {
 		data.forEach(d -> {
@@ -111,11 +187,31 @@ public class DocumentServiceImpl implements DocumentService {
 		});
 	}
 	
+	/**
+	 * Method that searches the database for all documents whose base64 field is equal to
+	 * Null
+	 * <p>
+	 * Returns the List of Documents with base64 null
+	 *
+	 * @return the {@link List}&lt;{@link Document}&gt;
+	 */
 	@Override
 	public List<Document> getDocsByBase64Null() {
 		return documentRepository.findByBase64Null();
 	}
 	
+	/**
+	 * Extracted method that continue logic of update method. Separated for better view
+	 *
+	 * @param thread       current {@link Thread} of updating documents
+	 * @param count        the value of start position of iterating
+	 * @param documentList the {@link List}&lt;{@link Document}&gt; to update
+	 * @param user         the user that send the request to API
+	 *
+	 * @see #update()
+	 * @see #updateDocData(Document, Collection)
+	 * @see #stopUpdate()
+	 */
 	public void extracted(Thread thread, int count, List<Document> documentList,
 			User user) {
 		while (count < documentList.size() && !thread.isInterrupted()) {
@@ -142,8 +238,8 @@ public class DocumentServiceImpl implements DocumentService {
 						syncService.getRemoteData().getPrintableDoc(build);
 				
 				Response<DocumentResponse> docResponse = availableDoc.execute();
-				log.info("Got the response in {} ms",
-						(new Date().getTime() - start.getTime()) / 1000.);
+				long responseTime = new Date().getTime() - start.getTime();
+				log.info("Got the response in {} ms", responseTime / 1000.);
 				
 				if (!docResponse.isSuccessful()) {
 					
@@ -151,7 +247,9 @@ public class DocumentServiceImpl implements DocumentService {
 																		   .string()
 							: "Unknown error");
 					count++;
-					Thread.sleep(10000L);
+					long timeout = 10000L - responseTime;
+					log.info("Timeout before next request {} sec", timeout / 1000.);
+					Thread.sleep(timeout);
 					continue;
 				}
 				
@@ -163,7 +261,9 @@ public class DocumentServiceImpl implements DocumentService {
 				log.info("Method [update() documents] ended process on doc [{}] "
 						+ "of [{}]", count, documentList.size());
 				
-				Thread.sleep(10000L);
+				long timeout = 10000L - responseTime;
+				log.info("Timeout before next request {} sec", timeout / 1000.);
+				Thread.sleep(timeout);
 			} catch (InterruptedException | IOException e) {
 				log.error(e.getMessage());
 				thread.interrupt();
@@ -171,20 +271,22 @@ public class DocumentServiceImpl implements DocumentService {
 		}
 	}
 	
+	/**
+	 * Method that searches the database for all documents whose base64 field is equal to
+	 * Null and who belongs to any Company in the given List
+	 * <p>
+	 * Returns the List of Documents with base64 null and Company from List
+	 *
+	 * @param companies the {@link List}&lt;{@link Company}&gt; to search in database
+	 *
+	 * @return the {@link List}&lt;{@link Document}&gt;
+	 */
 	public List<Document> getDocsByBase64NullAndCompanies(Collection<Company> companies) {
 		
 		return companies.stream()
 				.flatMap(c -> documentRepository.findByBase64NullAndOrder_Company(c)
 						.stream())
 				.collect(Collectors.toList());
-	}
-	
-	public void setTaskThread(Thread thread) {
-		this.taskThread = thread;
-	}
-	
-	public void setInitializedThread(boolean initializedThread) {
-		this.initializedThread = initializedThread;
 	}
 }
 

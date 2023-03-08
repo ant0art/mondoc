@@ -24,21 +24,59 @@ import org.springframework.transaction.annotation.Transactional;
 import retrofit2.Call;
 import retrofit2.Response;
 
+/**
+ * Service class to work with Sessions
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class SessionServiceImpl implements SessionService {
 	
+	/**
+	 * Repository which contains users
+	 */
 	private final UserRepository userRepository;
 	
+	/**
+	 * The field APPKEY set up by environment var
+	 */
 	private final String APPKEY = System.getenv("appkey");
 	
+	/**
+	 * ObjectMapper for reading and writing JSON
+	 */
 	private final ObjectMapper mapper =
 			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
+	/**
+	 * Injection of Retrofit service requests
+	 */
 	private final SyncService syncService;
 	
+	/**
+	 * Method that login User in API Dellin
+	 * <p>
+	 * Method connects to the Dellin API by a request that contains the following required
+	 * parameters of Dellin account: appkey, login, password.
+	 * <p>
+	 * Received response contains information about new Dellin Api session for current
+	 * account. The session and other passed parameters are encrypted and written to the
+	 * database
+	 * <p>
+	 * Login process is possible only for authorized users, since any change is recorded
+	 * in the history. Successful response changes the status of current Session to
+	 * {@link EntityStatus#CREATED} or {@link EntityStatus#UPDATED}, that depends on
+	 * previous state
+	 *
+	 * @param sessionDTO the {@link SessionDTO} object for creating API request
+	 *
+	 * @return the {@link AuthDellin} response
+	 *
+	 * @throws IOException by Retrofit method with synchronized {@link Call#execute()} if
+	 *                     a problem occurred talking to the server
+	 * @see IInterfaceManualLoad#login(SessionDTO)
+	 */
 	@Override
 	public AuthDellin getLoginResponse(SessionDTO sessionDTO) throws IOException {
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -85,6 +123,21 @@ public class SessionServiceImpl implements SessionService {
 		return response.body();
 	}
 	
+	/**
+	 * Method that logout User from API Dellin
+	 * <p>
+	 * Method connects to the Dellin API by a request that contains the following required
+	 * parameters: appkey, current Dellin session.
+	 * <p>
+	 * Logout process is possible only for authorized users, since any change is recorded
+	 * in the history. Successful response changes the status of current Session to
+	 * {@link EntityStatus#DELETED}
+	 *
+	 * @return the {@link AuthDellin} with logout API status
+	 *
+	 * @throws IOException by Retrofit method with synchronized {@link Call#execute()} if
+	 *                     a problem occurred talking to the server
+	 */
 	@Override
 	public AuthDellin getLogoutResponse() throws IOException {
 		
@@ -121,6 +174,13 @@ public class SessionServiceImpl implements SessionService {
 		return response.body();
 	}
 	
+	/**
+	 * Change the state of {@link Session}-entity by chosen and set up the entity field
+	 * updatedAt new local date time
+	 *
+	 * @param session the {@link Session} object
+	 * @param status  the {@link EntityStatus} enum
+	 */
 	private void updateStatus(Session session, EntityStatus status) {
 		session.setStatus(status);
 		session.setUpdatedAt(LocalDateTime.now());
