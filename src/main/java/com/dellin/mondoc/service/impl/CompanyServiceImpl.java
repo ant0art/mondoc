@@ -18,16 +18,41 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service class to work with Companies
+ *
+ * @see Company
+ * @see CompanyRepository
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CompanyServiceImpl implements CompanyService {
 	
+	/**
+	 * Repository which contains companies
+	 */
 	private final CompanyRepository companyRepository;
+	/**
+	 * User service class
+	 */
 	private final UserService userService;
+	/**
+	 * ObjectMapper for reading and writing JSON
+	 */
 	private final ObjectMapper mapper =
 			JsonMapper.builder().addModule(new JavaTimeModule()).build();
 	
+	/**
+	 * Method that create a new {@link Company} entity and write it to database
+	 * <p>
+	 * Returns the ResponseEntity object with http <b>200</b> status if well-created. The
+	 * object passed to the method should contain the required inn field.
+	 *
+	 * @param companyDTO the {@link CompanyDTO} object to add
+	 *
+	 * @return the {@link ResponseEntity} object
+	 */
 	@Override
 	public ResponseEntity<CompanyDTO> create(CompanyDTO companyDTO) {
 		
@@ -54,6 +79,14 @@ public class CompanyServiceImpl implements CompanyService {
 		return ResponseEntity.status(HttpStatus.OK).body(dto);
 	}
 	
+	/**
+	 * Method provides to add a company to the user
+	 * <p>
+	 * Method parameters must belong to previously created objects
+	 *
+	 * @param email the value of required field email of {@link User}
+	 * @param inn   the value of required field inn of {@link Company}
+	 */
 	@Override
 	public void addCompanyToUser(String email, String inn) {
 		
@@ -78,6 +111,16 @@ public class CompanyServiceImpl implements CompanyService {
 				company.getName(), company.getInn(), user.getEmail());
 	}
 	
+	/**
+	 * Method that update current {@link Company} entity found in database
+	 * <p>
+	 * Returns the ResponseEntity object with http <b>200</b> status if well-updated. The
+	 * object passed to the method should contain the required <u>inn</u> field.
+	 *
+	 * @param companyDTO the {@link CompanyDTO} object to update
+	 *
+	 * @return the {@link ResponseEntity} object
+	 */
 	@Override
 	public ResponseEntity<CompanyDTO> update(CompanyDTO companyDTO) {
 		
@@ -98,6 +141,16 @@ public class CompanyServiceImpl implements CompanyService {
 		return ResponseEntity.status(HttpStatus.OK).body(dto);
 	}
 	
+	/**
+	 * Method that find a {@link Company} in the database by inn
+	 * <p>
+	 * Returns the Company object if found or else a {@link CustomException} with http
+	 * <b>404</b> status
+	 *
+	 * @param inn the company inn
+	 *
+	 * @return the {{@link Company} object
+	 */
 	public Company getCompany(String inn) {
 		return companyRepository.findByInn(inn).orElseThrow(() -> new CustomException(
 				String.format("Company [INN: %s] not found", inn), HttpStatus.NOT_FOUND));

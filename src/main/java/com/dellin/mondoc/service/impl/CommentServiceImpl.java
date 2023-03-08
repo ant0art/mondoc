@@ -22,21 +22,49 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service class to work with Comments
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 	
+	/**
+	 * Repository which contains comments
+	 */
 	private final CommentRepository commentRepository;
 	
+	/**
+	 * User service class
+	 */
 	private final UserService userService;
 	
+	/**
+	 * Order service class
+	 */
 	private final OrderService orderService;
 	
+	/**
+	 * ObjectMapper for reading and writing JSON
+	 */
 	private final ObjectMapper mapper =
 			JsonMapper.builder().addModule(new JavaTimeModule())
 					  .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false).build();
 	
+	/**
+	 * Method that creates a new {@link Comment} entity and write it to database
+	 * <p>
+	 * Returns a {@link ResponseEntity<CommentDTO>} object with http <b>200</b> status if
+	 * well-created. The object passed to the method should contain the required
+	 * <u>email</u>
+	 * field. Creating data is possible only for authorized users, since any change is
+	 * recorded in the history
+	 *
+	 * @param commentDTO the {@link CommentDTO} object to add
+	 *
+	 * @return the {@link ResponseEntity<CommentDTO>} object
+	 */
 	@Override
 	public ResponseEntity<CommentDTO> create(CommentDTO commentDTO) {
 		
@@ -62,6 +90,16 @@ public class CommentServiceImpl implements CommentService {
 		return ResponseEntity.status(HttpStatus.OK).body(dto);
 	}
 	
+	/**
+	 * Method provides to add a comment to the order
+	 * <p>
+	 * Method parameters must belong to previously created objects. It is important to
+	 * keep in mind that an order can have more than one comment, while one comment cannot
+	 * apply to several orders.
+	 *
+	 * @param docId the value of {@link Order} required field
+	 * @param id    the value of {@link Comment} required field
+	 */
 	@Override
 	public void addCommentToOrder(String docId, Long id) {
 		Comment comment = getComment(id);
@@ -86,6 +124,17 @@ public class CommentServiceImpl implements CommentService {
 				order.getDocId());
 	}
 	
+	/**
+	 * Method that update current {@link Comment} entity found in database
+	 * <p>
+	 * Returns the ResponseEntity object with http <b>200</b> status if well-updated.
+	 * Updating data is possible only for authorized users, since any change is recorded
+	 * in the history
+	 *
+	 * @param commentDTO the {@link CommentDTO} object to update
+	 *
+	 * @return the {@link ResponseEntity<CommentDTO>} object
+	 */
 	@Override
 	public ResponseEntity<CommentDTO> update(CommentDTO commentDTO) {
 		
@@ -109,6 +158,16 @@ public class CommentServiceImpl implements CommentService {
 		return ResponseEntity.status(HttpStatus.OK).body(dto);
 	}
 	
+	/**
+	 * Method that find a {@link Comment} in the database by id
+	 * <p>
+	 * Returns the Comment object if found or else the {@link CustomException} with http
+	 * <b>404</b> status
+	 *
+	 * @param id the comment id
+	 *
+	 * @return the {@link Comment} object
+	 */
 	public Comment getComment(Long id) {
 		return commentRepository.findById(id).orElseThrow(
 				() -> new CustomException(String.format("Comment [ID: %d] not found", id),

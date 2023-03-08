@@ -1,6 +1,7 @@
 package com.dellin.mondoc.service.impl;
 
 import com.dellin.mondoc.exceptions.CustomException;
+import com.dellin.mondoc.model.dto.SessionDTO;
 import com.dellin.mondoc.model.entity.Company;
 import com.dellin.mondoc.model.entity.Document;
 import com.dellin.mondoc.model.entity.Order;
@@ -25,6 +26,7 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,20 +42,87 @@ import retrofit2.Response;
 import java.util.*;
 import java.util.stream.*;
 
+/**
+ * Service class to work with Orders
+ *
+ * @see Order
+ * @see OrderRepository
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 	
 	private static final String DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+	/**
+	 * user service class
+	 */
 	private final UserService userService;
+	/**
+	 * Repository which contains orders
+	 */
 	private final OrderRepository orderRepository;
+	/**
+	 * Repository which contains companies
+	 */
 	private final CompanyRepository companyRepository;
+	/**
+	 * Repository which contains documents
+	 */
 	private final DocumentRepository documentRepository;
+	/**
+	 * Injection of Retrofit service requests
+	 */
 	private final SyncService syncService;
+	/**
+	 * Service thread is used for updating orders
+	 */
+	@Setter
 	private Thread taskThread;
+	/**
+	 * Switcher of thread state
+	 */
+	@Setter
 	private boolean initializedThread = false;
 	
+	/**
+	 * Method that updates order database by connecting to Dellin API
+	 * <p>
+	 * Method connects to the Dellin API by sending a request that contains the following
+	 * required parameters: pre-decrypted appkey, pre-decrypted sessionID and optional
+	 * parameters in two ways.
+	 * <pre>
+	 * Required parameters:
+	 *  <b>appkey</b> - the encrypted API key
+	 *  <b>sessionID</b> - the encrypted unique session value previously received by the
+	 *  user after authorization in the API through the method
+	 *  {@link SessionServiceImpl#getLoginResponse(SessionDTO)}
+	 * Optional parameters that based on target of request:
+	 *  1. <b>docIds</b> - orders by their id - the {@link Collection}&lt;{@link String}&gt; of orders id
+	 *  2. <b>dateStart</b>, <b>dateEnd</b> - orders by time interval (start date, end
+	 *  date as String in format "yyyy-MM-dd")
+	 * </pre>
+	 * Orders in the response from the API are received in the form of a page -based
+	 * object, so the method also accepts the number of a certain page for updating in the
+	 * request.
+	 * <p>
+	 * Using multithreading, the method checks all available orders that require updating.
+	 * The timeout between requests set up as the recommended Dellin interval of 10
+	 * seconds. That`s why method checks the time of receipt of the response and send the
+	 * request for the next order after the remaining time.
+	 *
+	 * <p>
+	 * Updating data is possible only for authorized users, since any change is recorded
+	 * in the history.
+	 *
+	 * @param orderRequest the {@link OrderRequest} object for sending to API
+	 *
+	 * @throws IOException by Retrofit method with synchronized {@link Call#execute()} if
+	 *                     a problem occurred talking to the server
+	 * @see #extracted(Thread, OrderRequest, User, int, int, OrderRequestBuilder, Date)
+	 * @see #createAndUpdateOrders(Collection)
+	 * @see #stopUpdate()
+	 */
 	@Override
 	@Transactional
 	public void update(OrderRequest orderRequest) throws IOException {
@@ -105,68 +174,18 @@ public class OrderServiceImpl implements OrderService {
 		}
 	}
 	
-	public void extracted(Thread thread, OrderRequest orderRequest, User user,
-			int currentPage, int totalPages, OrderRequestBuilder requestBuilder,
-			Date programStart) {
-		Integer page = orderRequest.getPage();
-		if (page != null) {
-			log.info("User [EMAIL: {}] chose page [{}] for update", user.getUsername(),
-					page);
-			currentPage = page;
-			totalPages = page;
-		}
-		
-		log.info("Starting cycle of updating orders at [{}] page", currentPage);
-		
-		while (currentPage <= totalPages && !thread.isInterrupted()) {
-			try {
-				requestBuilder.setPage(currentPage);
-					
-					/*
-					User can update database by two different ways:
-					1. Including the list of interested in doc uid to the request
-					2. Including dates from-to, setting the range by it
-					These ways exclude each other from the request
-					* */
-				
-				OrderRequest build = requestBuilder.build();
-				
-				Call<OrderResponse> orders = syncService.getRemoteData().update(build);
-				
-				Date start = new Date();
-				log.info("Sending request to API");
-				Response<OrderResponse> response = orders.execute();
-				long responseTime = new Date().getTime() - start.getTime();
-				log.info("Got the response in {} sec", responseTime / 1000.);
-				
-				//				assert response.body() != null;
-				if (response.body() == null) {
-					throw new CustomException("Response body is empty",
-							HttpStatus.BAD_REQUEST);
-				}
-				Collection<OrderResponse.Order> ord = response.body().getOrders();
-				createAndUpdateOrders(ord);
-				if (page == null) {
-					totalPages = response.body().getMetadata().getTotalPages();
-				}
-				log.info("End of page: [{}]. Total pages: [{}]", currentPage,
-						response.body().getMetadata().getTotalPages());
-				currentPage++;
-				long timeout = 10000L - responseTime;
-				log.info("Timeout before next request {} sec", timeout / 1000.);
-				Thread.sleep(timeout);
-			} catch (InterruptedException | IOException e) {
-				log.error(e.getMessage());
-				thread.interrupt();
-			}
-		}
-		
-		Date programEnd = new Date();
-		long ms = programEnd.getTime() - programStart.getTime();
-		log.info("Method [update() orders] finished after {} seconds of working",
-				(ms / 1000L));
-	}
-	
+	/**
+	 * Method that update current Orders by API order response values
+	 * <p>
+	 * Method iterates each order of received Response to fill in empty {@link Order}
+	 * fields or update them and finally save to database
+	 *
+	 * @param orders the {@link Collection}&lt;{@link OrderResponse.Order}&gt;
+	 *
+	 * @see #update(OrderRequest)
+	 * @see #extracted(Thread, OrderRequest, User, int, int, OrderRequestBuilder, Date)
+	 * @see #stopUpdate()
+	 */
 	@Override
 	public void createAndUpdateOrders(Collection<OrderResponse.Order> orders) {
 		orders.forEach(o -> {
@@ -273,6 +292,16 @@ public class OrderServiceImpl implements OrderService {
 		});
 	}
 	
+	/**
+	 * Method that find an {@link Order} in the database by docId
+	 * <p>
+	 * Returns the Order object if found or else a {@link CustomException} with http
+	 * <b>404</b> status
+	 *
+	 * @param docId the order docId
+	 *
+	 * @return the {@link Order} object
+	 */
 	@Override
 	public Order getOrder(String docId) {
 		return orderRepository.findByDocId(docId).orElseThrow(() -> new CustomException(
@@ -280,6 +309,31 @@ public class OrderServiceImpl implements OrderService {
 				HttpStatus.NOT_FOUND));
 	}
 	
+	/**
+	 * Method that gets all available Orders in view of {@link OrderModel}
+	 * <p>
+	 * Returns a model map of all objects orders in a limited size list sorted by chosen
+	 * parameter.
+	 * <p>
+	 * The final ModelMap depends on Users authority. User with basic authority can get
+	 * orders: 1. only with earlier set up comments 2. only with companies for which they
+	 * have rights
+	 * <p>
+	 * Working with data is possible only for authorized users, since any change is
+	 * recorded in the history.
+	 *
+	 * @param page    the serial number of page
+	 * @param perPage the number of elements on page
+	 * @param sort    the main parameter of sorting (see available before
+	 *                {@link OrderModel})
+	 * @param order   ASC or DESC
+	 *
+	 * @return the ModelMap of sorted {@link OrderModel}
+	 *
+	 * @see ModelMap
+	 * @see Pageable
+	 * @see Page
+	 */
 	@Override
 	public ModelMap getOrders(Integer page, Integer perPage, String sort,
 			Sort.Direction order) {
@@ -344,6 +398,13 @@ public class OrderServiceImpl implements OrderService {
 		return map;
 	}
 	
+	/**
+	 * Method that interrupt process of updating order database
+	 * <p>
+	 * Method interrupts earlier started thread of updating orders
+	 *
+	 * @see OrderServiceImpl#update(OrderRequest)
+	 */
 	@Override
 	public void stopUpdate() {
 		
@@ -354,11 +415,79 @@ public class OrderServiceImpl implements OrderService {
 		}
 	}
 	
-	public void setTaskThread(Thread thread) {
-		this.taskThread = thread;
-	}
-	
-	public void setInitializedThread(boolean initializedThread) {
-		this.initializedThread = initializedThread;
+	/**
+	 * Extracted method that continue logic of update method. Separated for better view
+	 *
+	 * @param thread         current {@link Thread} of updating orders
+	 * @param orderRequest   the {@link OrderRequest} object for sending to API
+	 * @param user           the user that send the request to API
+	 * @param currentPage    the value of start position of iterating
+	 * @param totalPages     the value of all available pages
+	 * @param requestBuilder the API request builder before call
+	 * @param programStart   the time when program started
+	 *
+	 * @see #update(OrderRequest)
+	 * @see #createAndUpdateOrders(Collection)
+	 * @see #stopUpdate()
+	 */
+	public void extracted(Thread thread, OrderRequest orderRequest, User user,
+			int currentPage, int totalPages, OrderRequestBuilder requestBuilder,
+			Date programStart) {
+		Integer page = orderRequest.getPage();
+		if (page != null) {
+			log.info("User [EMAIL: {}] chose page [{}] for update", user.getUsername(),
+					page);
+			currentPage = page;
+			totalPages = page;
+		}
+		
+		log.info("Starting cycle of updating orders at [{}] page", currentPage);
+		
+		while (currentPage <= totalPages && !thread.isInterrupted()) {
+			try {
+				requestBuilder.setPage(currentPage);
+					
+					/*
+					User can update database by two different ways:
+					1. Including the list of interested in doc uid to the request
+					2. Including dates from-to, setting the range by it
+					These ways exclude each other from the request
+					* */
+				
+				OrderRequest build = requestBuilder.build();
+				
+				Call<OrderResponse> orders = syncService.getRemoteData().update(build);
+				
+				Date start = new Date();
+				log.info("Sending request to API");
+				Response<OrderResponse> response = orders.execute();
+				long responseTime = new Date().getTime() - start.getTime();
+				log.info("Got the response in {} sec", responseTime / 1000.);
+				
+				if (response.body() == null) {
+					throw new CustomException("Response body is empty",
+							HttpStatus.BAD_REQUEST);
+				}
+				Collection<OrderResponse.Order> ord = response.body().getOrders();
+				createAndUpdateOrders(ord);
+				if (page == null) {
+					totalPages = response.body().getMetadata().getTotalPages();
+				}
+				log.info("End of page: [{}]. Total pages: [{}]", currentPage,
+						response.body().getMetadata().getTotalPages());
+				currentPage++;
+				long timeout = 10000L - responseTime;
+				log.info("Timeout before next request {} sec", timeout / 1000.);
+				Thread.sleep(timeout);
+			} catch (InterruptedException | IOException e) {
+				log.error(e.getMessage());
+				thread.interrupt();
+			}
+		}
+		
+		Date programEnd = new Date();
+		long ms = programEnd.getTime() - programStart.getTime();
+		log.info("Method [update() orders] finished after {} seconds of working",
+				(ms / 1000L));
 	}
 }

@@ -6,6 +6,12 @@ import lombok.Setter;
 
 import java.util.*;
 
+/**
+ * The response class received as answer by API Dellin
+ *
+ * @see <a
+ * href=https://dev.dellin.ru/api/en_orders/orders-search/>https://dev.dellin.ru/api/</a>
+ */
 @Getter
 @Setter
 public class OrderResponse {
