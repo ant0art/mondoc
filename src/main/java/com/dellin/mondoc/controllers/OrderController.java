@@ -56,7 +56,7 @@ public class OrderController {
 	public ModelMap getOrders(
 			@RequestParam(required = false, defaultValue = "1") Integer page,
 			@RequestParam(required = false, defaultValue = "1") Integer perPage,
-			@RequestParam(required = false, defaultValue = "name") String sort,
+			@RequestParam(required = false, defaultValue = "state") String sort,
 			@RequestParam(required = false, defaultValue = "ASC") Sort.Direction order) {
 		return orderService.getOrders(page, perPage, sort, order);
 	}
