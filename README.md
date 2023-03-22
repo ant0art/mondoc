@@ -12,12 +12,12 @@ company ["Delovye Linii"](https://www.dellin.ru/ "transport company Dellin") (AP
 
 # Table of contents
 
-1. <a href="Project_description">Project description</a>
-2. <a href="installation">How to install and run the project</a>
-3. <a href="using_project">How to use project</a>
-4. <a href="junit_tests">Tests with Mockito JUnit</a>
+1. [Project description](#project-description)
+2. [How to install and run the project](#how-to-install-and-run-the-project)
+3. [How to use project](#how-to-use-project)
+4. [Tests with Mockito JUnit](#tests-with-mockito-junit)
 
-## [Project description](Project_description "Project description")
+## Project description
 
 The software environment provides a connection to the API Dellin, stores all information
 about the received models, ensuring the confidentiality of information using modern
@@ -78,7 +78,7 @@ and technologies:**
   environment. See in [GitHub](https://github.com/jasypt/jasypt)
 - `Swagger` - interface description language for describing RESTful API
 
-## [How to install and run the project](installation "How to install and run the project")
+## How to install and run the project
 
 1. Clone the repository from `Git` using the command:
 
@@ -171,7 +171,7 @@ public class MondocApplication {
 1. To build project run Maven (clean package) excluding test
 2. Hardcode environments to application.yml
 
-## [How to use project](using_project "How to use project")
+## How to use project
 
 **Hidden by spoilers**
 <details>
@@ -281,7 +281,7 @@ he/she/they has access.
 
 </details>
 
-## [Tests with Mockito JUnit](junit_tests "Tests with Mockito JUnit")
+## Tests with Mockito JUnit
 
 To effectively test the service classes of a Java project, use the Mockito Junit library.
 
