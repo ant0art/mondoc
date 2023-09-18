@@ -1,6 +1,6 @@
 # Monitoring.Doc
 
-Deployed on AWS [http://13.39.13.13:8080](http://13.39.13.13:8080/swagger-ui/index.html#/)
+Deployed on AWS [http://35.180.128.10:8080](http://35.180.128.10:8080/swagger-ui/index.html#/)
 
 The goal of the project is to develop a software environment that will be a safe zone for
 users with different access rights to interact directly with the objects of the system,
