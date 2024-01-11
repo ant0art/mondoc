@@ -1,0 +1,741 @@
+openapi: 3.0.1
+info:
+    title: Monitoring.Doc
+    version: v1
+    description: >-
+        ## The concept of a software system
+        
+        The system allows for centralized, remote updating of data on cargo transportation of a group of companies and transfer accounting documents between their structural divisions.
+        
+        
+        The software environment provides a connection to the [API Dellin](https://dev.dellin.ru/api/), stores all information about the received models, ensuring the confidentiality of information using modern encryption tools.
+        
+        
+        The application includes the ability to authenticate and authorize users, access the API and display information about received orders and documents.
+servers:
+    -   url: http://localhost:8080
+        description: Generated server url
+tags:
+    -   name: Orders
+        description: >-
+            The order API. Contains operations to manually start and stop updating
+            database of orders, show all orders
+    -   name: Sessions
+        description: >-
+            The session API. Contains operations to work with sessions of third-side
+            API like login or logout
+    -   name: Authentication
+        description: Contains operations of users authentication
+    -   name: Companies
+        description: >-
+            The company API. Contains operations to work with companies like add new
+            one or add it to definite user
+    -   name: Users
+        description: The user API. Contains all operations that can be performed on a user
+    -   name: Comments
+        description: >-
+            The comment API. Contains operations to work with comments like add new
+            one or add it to definite order
+    -   name: Roles
+        description: >-
+            The role API. Contains operations to work with roles like add new one or
+            add it to definite user
+    -   name: Documents
+        description: >-
+            The document API. Contains operations to manually start and stop updating
+            data of the available documents
+paths:
+    /users/update:
+        put:
+            tags:
+                - Users
+            summary: Update user
+            operationId: update
+            parameters:
+                -   name: email
+                    in: query
+                    required: true
+                    schema:
+                        type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UserDTO'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/UserDTO'
+            security:
+                -   Authorization: [ ]
+    /companies/update:
+        put:
+            tags:
+                - Companies
+            summary: Update company
+            operationId: update_1
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CompanyDTO'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/CompanyDTO'
+            security:
+                -   Authorization: [ ]
+    /companies/add:
+        put:
+            tags:
+                - Companies
+            summary: Add a new company
+            operationId: create
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CompanyDTO'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/CompanyDTO'
+            security:
+                -   Authorization: [ ]
+    /comments/update:
+        put:
+            tags:
+                - Comments
+            summary: Update comment
+            operationId: update_2
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CommentDTO'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/CommentDTO'
+            security:
+                -   Authorization: [ ]
+    /comments/add:
+        put:
+            tags:
+                - Comments
+            summary: Add a new comment
+            operationId: create_1
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CommentDTO'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/CommentDTO'
+            security:
+                -   Authorization: [ ]
+    /users/save:
+        post:
+            tags:
+                - Users
+            summary: Create a user
+            operationId: create_2
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UserDTO'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/UserDTO'
+            security:
+                -   Authorization: [ ]
+    /sessions/logout:
+        post:
+            tags:
+                - Sessions
+            summary: Logout process
+            operationId: logout
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/AuthDellin'
+            security:
+                -   Authorization: [ ]
+    /sessions/login:
+        post:
+            tags:
+                - Sessions
+            summary: Login to API
+            operationId: login
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SessionDTO'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/AuthDellin'
+            security:
+                -   Authorization: [ ]
+    /roles/save:
+        post:
+            tags:
+                - Roles
+            summary: Create a role
+            operationId: create_3
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RoleDTO'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/RoleDTO'
+            security:
+                -   Authorization: [ ]
+    /roles/addToUser:
+        post:
+            tags:
+                - Roles
+            summary: Add a role to user
+            operationId: addToUser
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RoleToUserForm'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                type: object
+            security:
+                -   Authorization: [ ]
+    /orders/update:
+        post:
+            tags:
+                - Orders
+            summary: Update orders
+            operationId: update_3
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/OrderRequest'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                type: object
+            security:
+                -   Authorization: [ ]
+    /companies/addToUser:
+        post:
+            tags:
+                - Companies
+            summary: Add a company to a user
+            operationId: addToUser_1
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CompanyToUserForm'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                type: object
+            security:
+                -   Authorization: [ ]
+    /comments/addToOrder:
+        post:
+            tags:
+                - Comments
+            summary: Add a comment to an order
+            operationId: addToUser_2
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CommentToOrderForm'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                type: object
+            security:
+                -   Authorization: [ ]
+    /api/login:
+        post:
+            tags:
+                - Authentication
+            summary: User authentication
+            operationId: login_1
+            requestBody:
+                content:
+                    application/x-www-form-urlencoded:
+                        schema:
+                            $ref: '#/components/schemas/AuthenticationForm'
+                required: true
+            responses:
+                '200':
+                    description: OK
+    /users/get:
+        get:
+            tags:
+                - Users
+            summary: Get a user
+            operationId: read
+            parameters:
+                -   name: email
+                    in: query
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/UserDTO'
+            security:
+                -   Authorization: [ ]
+    /users/all:
+        get:
+            tags:
+                - Users
+            summary: Get all users
+            operationId: getUsers
+            parameters:
+                -   name: page
+                    in: query
+                    required: false
+                    schema:
+                        type: integer
+                        format: int32
+                        default: 1
+                -   name: perPage
+                    in: query
+                    required: false
+                    schema:
+                        type: integer
+                        format: int32
+                        default: 1
+                -   name: sort
+                    in: query
+                    required: false
+                    schema:
+                        type: string
+                        default: name
+                -   name: order
+                    in: query
+                    required: false
+                    schema:
+                        type: string
+                        default: ASC
+                        enum:
+                            - ASC
+                            - DESC
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/ModelMap'
+            security:
+                -   Authorization: [ ]
+    /orders/stopUpdate:
+        get:
+            tags:
+                - Orders
+            summary: Interrupt process of updating  orders
+            operationId: stopUpdate
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                type: object
+            security:
+                -   Authorization: [ ]
+    /orders/all:
+        get:
+            tags:
+                - Orders
+            summary: Get all orders with available documents
+            operationId: getOrders
+            parameters:
+                -   name: page
+                    in: query
+                    required: false
+                    schema:
+                        type: integer
+                        format: int32
+                        default: 1
+                -   name: perPage
+                    in: query
+                    required: false
+                    schema:
+                        type: integer
+                        format: int32
+                        default: 1
+                -   name: sort
+                    in: query
+                    required: false
+                    schema:
+                        type: string
+                        default: name
+                -   name: order
+                    in: query
+                    required: false
+                    schema:
+                        type: string
+                        default: ASC
+                        enum:
+                            - ASC
+                            - DESC
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                $ref: '#/components/schemas/ModelMap'
+            security:
+                -   Authorization: [ ]
+    /documents/update:
+        get:
+            tags:
+                - Documents
+            summary: Update documents
+            operationId: update_4
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                type: object
+            security:
+                -   Authorization: [ ]
+    /documents/stopUpdate:
+        get:
+            tags:
+                - Documents
+            summary: Interrupt process of updating  documents
+            operationId: stopUpdate_1
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                type: object
+            security:
+                -   Authorization: [ ]
+    /api/token/refresh:
+        get:
+            tags:
+                - Authentication
+            summary: Refresh token
+            operationId: refreshToken
+            responses:
+                '200':
+                    description: OK
+            security:
+                -   Authorization: [ ]
+    /users/delete:
+        delete:
+            tags:
+                - Users
+            summary: Remove user
+            operationId: delete
+            parameters:
+                -   name: email
+                    in: query
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        '*/*':
+                            schema:
+                                type: string
+                                enum:
+                                    - 100 CONTINUE
+                                    - 101 SWITCHING_PROTOCOLS
+                                    - 102 PROCESSING
+                                    - 103 CHECKPOINT
+                                    - 200 OK
+                                    - 201 CREATED
+                                    - 202 ACCEPTED
+                                    - 203 NON_AUTHORITATIVE_INFORMATION
+                                    - 204 NO_CONTENT
+                                    - 205 RESET_CONTENT
+                                    - 206 PARTIAL_CONTENT
+                                    - 207 MULTI_STATUS
+                                    - 208 ALREADY_REPORTED
+                                    - 226 IM_USED
+                                    - 300 MULTIPLE_CHOICES
+                                    - 301 MOVED_PERMANENTLY
+                                    - 302 FOUND
+                                    - 302 MOVED_TEMPORARILY
+                                    - 303 SEE_OTHER
+                                    - 304 NOT_MODIFIED
+                                    - 305 USE_PROXY
+                                    - 307 TEMPORARY_REDIRECT
+                                    - 308 PERMANENT_REDIRECT
+                                    - 400 BAD_REQUEST
+                                    - 401 UNAUTHORIZED
+                                    - 402 PAYMENT_REQUIRED
+                                    - 403 FORBIDDEN
+                                    - 404 NOT_FOUND
+                                    - 405 METHOD_NOT_ALLOWED
+                                    - 406 NOT_ACCEPTABLE
+                                    - 407 PROXY_AUTHENTICATION_REQUIRED
+                                    - 408 REQUEST_TIMEOUT
+                                    - 409 CONFLICT
+                                    - 410 GONE
+                                    - 411 LENGTH_REQUIRED
+                                    - 412 PRECONDITION_FAILED
+                                    - 413 PAYLOAD_TOO_LARGE
+                                    - 413 REQUEST_ENTITY_TOO_LARGE
+                                    - 414 URI_TOO_LONG
+                                    - 414 REQUEST_URI_TOO_LONG
+                                    - 415 UNSUPPORTED_MEDIA_TYPE
+                                    - 416 REQUESTED_RANGE_NOT_SATISFIABLE
+                                    - 417 EXPECTATION_FAILED
+                                    - 418 I_AM_A_TEAPOT
+                                    - 419 INSUFFICIENT_SPACE_ON_RESOURCE
+                                    - 420 METHOD_FAILURE
+                                    - 421 DESTINATION_LOCKED
+                                    - 422 UNPROCESSABLE_ENTITY
+                                    - 423 LOCKED
+                                    - 424 FAILED_DEPENDENCY
+                                    - 425 TOO_EARLY
+                                    - 426 UPGRADE_REQUIRED
+                                    - 428 PRECONDITION_REQUIRED
+                                    - 429 TOO_MANY_REQUESTS
+                                    - 431 REQUEST_HEADER_FIELDS_TOO_LARGE
+                                    - 451 UNAVAILABLE_FOR_LEGAL_REASONS
+                                    - 500 INTERNAL_SERVER_ERROR
+                                    - 501 NOT_IMPLEMENTED
+                                    - 502 BAD_GATEWAY
+                                    - 503 SERVICE_UNAVAILABLE
+                                    - 504 GATEWAY_TIMEOUT
+                                    - 505 HTTP_VERSION_NOT_SUPPORTED
+                                    - 506 VARIANT_ALSO_NEGOTIATES
+                                    - 507 INSUFFICIENT_STORAGE
+                                    - 508 LOOP_DETECTED
+                                    - 509 BANDWIDTH_LIMIT_EXCEEDED
+                                    - 510 NOT_EXTENDED
+                                    - 511 NETWORK_AUTHENTICATION_REQUIRED
+            security:
+                -   Authorization: [ ]
+components:
+    schemas:
+        Role:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int64
+                roleName:
+                    type: string
+                updatedAt:
+                    type: string
+                    format: date-time
+                status:
+                    type: string
+                    enum:
+                        - CREATED
+                        - UPDATED
+                        - DELETED
+        UserDTO:
+            required:
+                - email
+                - password
+            type: object
+            properties:
+                email:
+                    type: string
+                password:
+                    type: string
+                roles:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Role'
+        CompanyDTO:
+            type: object
+            properties:
+                name:
+                    type: string
+                inn:
+                    type: string
+        CommentDTO:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int64
+                text:
+                    type: string
+        AuthDellin:
+            type: object
+            properties:
+                metadata:
+                    $ref: '#/components/schemas/Metadata'
+                data:
+                    $ref: '#/components/schemas/Data'
+        Data:
+            type: object
+            properties:
+                state:
+                    type: string
+                sessionID:
+                    type: string
+        Metadata:
+            type: object
+            properties:
+                status:
+                    type: integer
+                    format: int32
+                generated_at:
+                    type: string
+        SessionDTO:
+            type: object
+            properties:
+                appkey:
+                    type: string
+                login:
+                    type: string
+                password:
+                    type: string
+                sessionDl:
+                    type: string
+        RoleDTO:
+            type: object
+            properties:
+                roleName:
+                    type: string
+        RoleToUserForm:
+            type: object
+            properties:
+                email:
+                    type: string
+                roleName:
+                    type: string
+        OrderRequest:
+            required:
+                - appKey
+                - sessionID
+            type: object
+            properties:
+                appKey:
+                    type: string
+                sessionID:
+                    type: string
+                docIds:
+                    type: array
+                    items:
+                        type: string
+                dateStart:
+                    type: string
+                dateEnd:
+                    type: string
+                page:
+                    type: integer
+                    format: int32
+        CompanyToUserForm:
+            type: object
+            properties:
+                email:
+                    type: string
+                inn:
+                    type: string
+        CommentToOrderForm:
+            type: object
+            properties:
+                docId:
+                    type: string
+                id:
+                    type: integer
+                    format: int64
+        AuthenticationForm:
+            required:
+                - password
+                - username
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+        ModelMap:
+            type: object
+            properties:
+                empty:
+                    type: boolean
+            additionalProperties:
+                type: object
+    securitySchemes:
+        Authorization:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
